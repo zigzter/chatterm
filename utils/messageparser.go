@@ -19,7 +19,6 @@ func MessageParser(input string) ChatMessage {
 	parts := strings.SplitN(input, " :", 2)
 	metadata := parts[0]
 	message := strings.Split(parts[1], " :")[1]
-	println(message)
 	keyValPairs := strings.Split(metadata, ";")
 	chatMessage := ChatMessage{Message: message}
 	for _, kvPair := range keyValPairs {

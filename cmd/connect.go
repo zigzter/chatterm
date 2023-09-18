@@ -20,7 +20,7 @@ var (
 	cmdRegex *regexp.Regexp = regexp.MustCompile(`^!(\w+)\s?(\w+)?`)
 )
 
-func establishWSConnection(channel string) {
+func establishWSConnection(channel string, username string, oath string) {
 	socketUrl := "ws://irc-ws.chat.twitch.tv:80"
 	conn, _, err := websocket.DefaultDialer.Dial(socketUrl, nil)
 	if err != nil {
@@ -31,9 +31,13 @@ func establishWSConnection(channel string) {
 	if err1 != nil {
 		log.Println("Error writing message:", err1)
 	}
-	conn.WriteMessage(websocket.TextMessage, []byte("PASS replaceme"))
-	conn.WriteMessage(websocket.TextMessage, []byte("NICK zigzter"))
-	conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("#%s", channel)))
+	setPass := fmt.Sprintf("PASS %s", oath)
+	log.Println(setPass)
+	conn.WriteMessage(websocket.TextMessage, []byte(setPass))
+	setUser := fmt.Sprintf("NICK %s", username)
+	conn.WriteMessage(websocket.TextMessage, []byte(setUser))
+	joinChannel := fmt.Sprintf("JOIN #%s", channel)
+	conn.WriteMessage(websocket.TextMessage, []byte(joinChannel))
 	for {
 		// Read messages and handle them
 		messageType, message, err := conn.ReadMessage()
@@ -45,31 +49,42 @@ func establishWSConnection(channel string) {
 			rawIrcMessage := strings.TrimSpace(string(message))
 			if msgRegex.MatchString(rawIrcMessage) {
 				chatMessage := utils.MessageParser(rawIrcMessage)
-				fmt.Printf("%+v\n", chatMessage)
+				fmt.Printf("%s: %s \n", chatMessage.DisplayName, chatMessage.Message)
+			} else {
+				fmt.Println(rawIrcMessage)
 			}
 		}
 	}
 }
 
-// connectCmd represents the connect command
+var (
+	Channel  string
+	Username string
+	Oauth    string
+)
+
 var connectCmd = &cobra.Command{
 	Use:   "connect",
 	Short: "Connects to a Twitch chat",
 	Long:  `Connects to a Twitch chat`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("connect called!!!", args)
-
-		go establishWSConnection(args[0])
+		fmt.Println("running cmd", Channel, Username, Oauth)
+		go establishWSConnection(Channel, Username, Oauth)
 
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigChan
-		// if joinErr != nil {
-		// 	log.Fatal("Error joining room:", joinErr)
-		// }
 	},
 }
 
 func init() {
+	connectCmd.Flags().StringVarP(&Channel, "channel", "c", "", "The Twitch channel to join")
+	connectCmd.Flags().StringVarP(&Username, "username", "u", "", "Your username on Twitch")
+	connectCmd.Flags().StringVarP(&Oauth, "oauth", "o", "", "The Oath string, in format oauth:xyz123")
+	connectCmd.MarkFlagRequired("channel")
+	connectCmd.MarkFlagRequired("username")
+	connectCmd.MarkFlagRequired("oauth")
+	connectCmd.Println(Channel, Username, Oauth)
+
 	rootCmd.AddCommand(connectCmd)
 }
