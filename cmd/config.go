@@ -36,7 +36,7 @@ to quickly create a Cobra application.`,
 		if err := viper.WriteConfig(); err != nil {
 			fmt.Println("Error saving config:", err)
 		} else {
-			fmt.Println("Config saved successfully")
+			fmt.Println("Config saved successfully in $HOME/.config/chatterm.json")
 		}
 	},
 }

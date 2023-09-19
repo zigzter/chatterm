@@ -22,5 +22,4 @@ func InitConfig() {
 			fmt.Println("Error reading config file:", err)
 		}
 	}
-	viper.WriteConfig()
 }
