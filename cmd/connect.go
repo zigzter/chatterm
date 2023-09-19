@@ -6,22 +6,22 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/zigzter/chatterm/utils"
 )
 
-var (
-	Channel  string
-	Username string
-	Oauth    string
-)
+var Channel string
 
 var connectCmd = &cobra.Command{
 	Use:   "connect",
 	Short: "Connects to a Twitch chat",
 	Long:  `Connects to a Twitch chat`,
 	Run: func(cmd *cobra.Command, args []string) {
-		go utils.EstablishWSConnection(Channel, Username, Oauth)
+		utils.InitConfig()
+		username := viper.GetString("username")
+		oauth := viper.GetString("oauth")
+		go utils.EstablishWSConnection(Channel, username, oauth)
 
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -31,12 +31,8 @@ var connectCmd = &cobra.Command{
 
 func init() {
 	connectCmd.Flags().StringVarP(&Channel, "channel", "c", "", "The Twitch channel to join")
-	connectCmd.Flags().StringVarP(&Username, "username", "u", "", "Your username on Twitch")
-	connectCmd.Flags().StringVarP(&Oauth, "oauth", "o", "", "The Oath string, in format oauth:xyz123")
 	connectCmd.MarkFlagRequired("channel")
-	connectCmd.MarkFlagRequired("username")
-	connectCmd.MarkFlagRequired("oauth")
-	connectCmd.Println(Channel, Username, Oauth)
+	connectCmd.Println(Channel)
 
 	rootCmd.AddCommand(connectCmd)
 }
