@@ -2,14 +2,12 @@
 
 Twitch chat in the terminal. Currently just spits out new chats as they come in. Goal is to be able to chat as well as perform moderator actions.
 
-Current flow (requires Go):
+Current flow (requires Go if cloning):
 
-1. `go build .`
+1. Either clone and `go build .`, or download the binary under releases
 2. Grab a token from here: https://twitchapps.com/tmi/
 3. Run `./chatterm config` and enter your username and Oauth token when prompted
 3. `./chatterm connect -c channelName`
-
-In the near future I'll actually make proper releases so you won't require Go to download and run this.
 
 Todo:
 
