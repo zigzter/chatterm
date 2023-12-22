@@ -13,12 +13,7 @@ import (
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Set the config",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long: "Saves a config file with Twitch username and oauth token for connecting",
 	Run: func(cmd *cobra.Command, args []string) {
 		utils.InitConfig()
 

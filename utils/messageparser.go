@@ -6,7 +6,9 @@ import (
 
 type ChatMessage struct {
 	Timestamp      string
+    // comma seperated string, each badge followed by a slash and a number
 	Badges         string
+    // User color in hex
 	Color          string
 	DisplayName    string
 	IsFirstMessage bool

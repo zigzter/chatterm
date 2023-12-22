@@ -43,7 +43,7 @@ func EstablishWSConnection(channel string, username string, oath string) {
 			rawIrcMessage := strings.TrimSpace(string(message))
 			if msgRegex.MatchString(rawIrcMessage) {
 				chatMessage := MessageParser(rawIrcMessage)
-				fmt.Printf("%s: %s \n", chatMessage.DisplayName, chatMessage.Message)
+                PrintMessage(chatMessage)
 			} else {
 				fmt.Println(rawIrcMessage)
 			}
