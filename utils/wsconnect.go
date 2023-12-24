@@ -11,6 +11,7 @@ import (
 
 var (
 	msgRegex *regexp.Regexp = regexp.MustCompile(`\bPRIVMSG\b`)
+	subRegex *regexp.Regexp = regexp.MustCompile(`\bUSERNOTICE\b`)
 	cmdRegex *regexp.Regexp = regexp.MustCompile(`^!(\w+)\s?(\w+)?`)
 )
 
@@ -44,6 +45,10 @@ func EstablishWSConnection(channel string, username string, oath string) {
 			if msgRegex.MatchString(rawIrcMessage) {
 				chatMessage := MessageParser(rawIrcMessage)
                 PrintMessage(chatMessage)
+            } else if subRegex.MatchString(rawIrcMessage) {
+                subMessage := SubParser(rawIrcMessage)
+                log.Printf(rawIrcMessage)
+                PrintSubMessage(subMessage)
 			} else {
 				fmt.Println(rawIrcMessage)
 			}
