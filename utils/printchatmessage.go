@@ -4,7 +4,7 @@ import (
     "fmt"
 )
 
-func PrintMessage(message ChatMessage) {
+func PrintChatMessage(message ChatMessage) {
     icon := ""
     bgColor := ""
     if message.IsFirstMessage {
