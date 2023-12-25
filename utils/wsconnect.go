@@ -10,9 +10,11 @@ import (
 )
 
 var (
-	msgRegex *regexp.Regexp = regexp.MustCompile(`\bPRIVMSG\b`)
-	subRegex *regexp.Regexp = regexp.MustCompile(`\bUSERNOTICE\b`)
-	cmdRegex *regexp.Regexp = regexp.MustCompile(`^!(\w+)\s?(\w+)?`)
+	msgRegex  *regexp.Regexp = regexp.MustCompile(`\bPRIVMSG\b`)
+	subRegex  *regexp.Regexp = regexp.MustCompile(`\bUSERNOTICE\b`)
+	joinRegex *regexp.Regexp = regexp.MustCompile(`\bJOIN\b`)
+	partRegex *regexp.Regexp = regexp.MustCompile(`\bPART\b`)
+	cmdRegex  *regexp.Regexp = regexp.MustCompile(`^!(\w+)\s?(\w+)?`)
 )
 
 func EstablishWSConnection(channel string, username string, oath string) {
@@ -44,11 +46,14 @@ func EstablishWSConnection(channel string, username string, oath string) {
 			rawIrcMessage := strings.TrimSpace(string(message))
 			if msgRegex.MatchString(rawIrcMessage) {
 				chatMessage := MessageParser(rawIrcMessage)
-                PrintChatMessage(chatMessage)
-            } else if subRegex.MatchString(rawIrcMessage) {
-                subMessage := SubParser(rawIrcMessage)
-                log.Printf(rawIrcMessage)
-                PrintSubMessage(subMessage)
+				PrintChatMessage(chatMessage)
+			} else if subRegex.MatchString(rawIrcMessage) {
+				subMessage := SubParser(rawIrcMessage)
+				PrintSubMessage(subMessage)
+			} else if joinRegex.MatchString(rawIrcMessage) {
+				// TODO: handle joins?
+			} else if partRegex.MatchString(rawIrcMessage) {
+				// TODO: handle parts?
 			} else {
 				fmt.Println(rawIrcMessage)
 			}

@@ -1,14 +1,13 @@
 package utils
 
 import (
+	"strconv"
 	"strings"
+	"time"
 )
 
 type ChatMessage struct {
 	Timestamp      string
-    // comma seperated string, each badge followed by a slash and a number
-	Badges         string
-    // User color in hex
 	Color          string
 	DisplayName    string
 	IsFirstMessage bool
@@ -30,8 +29,6 @@ func MessageParser(input string) ChatMessage {
 			value := kv[1]
 
 			switch key {
-			case "badges":
-				chatMessage.Badges = value
 			case "color":
 				chatMessage.Color = value
 			case "display-name":
@@ -42,13 +39,24 @@ func MessageParser(input string) ChatMessage {
 				chatMessage.IsMod = value == "1"
 			case "vip":
 				chatMessage.IsVIP = value == "1"
+			case "tmi-sent-ts":
+				unixTime, err := strconv.ParseInt(value, 10, 64)
+				if err != nil {
+					chatMessage.Timestamp = "00:00"
+					return chatMessage
+				}
+				timeObj := time.Unix(unixTime/1000, 0)
+				// TODO: Custom timezone
+				location, err := time.LoadLocation("America/Los_Angeles")
+				if err != nil {
+					chatMessage.Timestamp = "00:00"
+					return chatMessage
+				}
+				localTime := timeObj.In(location)
+				formattedTime := localTime.Format("15:04")
+				chatMessage.Timestamp = formattedTime
 			}
 		}
 	}
-
-	// Parse the timestamp and username
-	// parts = strings.SplitN(parts[0], " ", 4)
-	// chatMessage.Timestamp = parts[0] + " " + parts[1]
-	// chatMessage.Username = parts[3]
 	return chatMessage
 }
