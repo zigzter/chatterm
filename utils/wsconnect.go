@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/websocket"
+	"github.com/zigzter/chatterm/model"
 )
 
 var (
@@ -18,7 +19,11 @@ var (
 	cmdRegex  *regexp.Regexp = regexp.MustCompile(`^!(\w+)\s?(\w+)?`)
 )
 
-func EstablishWSConnection(channel string, username string, oath string) {
+type rawTwitchMessage struct {
+	content string
+}
+
+func EstablishWSConnection(channel string, username string, oath string, msgChan chan<- model.ChatMessageWrap) {
 	socketUrl := "ws://irc-ws.chat.twitch.tv:80"
 	conn, _, err := websocket.DefaultDialer.Dial(socketUrl, nil)
 	if err != nil {
@@ -46,7 +51,8 @@ func EstablishWSConnection(channel string, username string, oath string) {
 			rawIrcMessage := strings.TrimSpace(string(message))
 			if msgRegex.MatchString(rawIrcMessage) {
 				chatMessage := MessageParser(rawIrcMessage)
-				PrintChatMessage(chatMessage)
+				msgChan <- model.ChatMessageWrap{ChatMsg: chatMessage}
+				// PrintChatMessage(chatMessage)
 			} else if subRegex.MatchString(rawIrcMessage) {
 				subMessage := SubParser(rawIrcMessage)
 				PrintSubMessage(subMessage)

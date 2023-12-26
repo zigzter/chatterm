@@ -2,16 +2,11 @@ package utils
 
 import (
 	"strings"
+
+	"github.com/zigzter/chatterm/types"
 )
 
-type SubMessage struct {
-	DisplayName string
-	Message     string
-	Months      string
-	Streak      string
-}
-
-func SubParser(input string) SubMessage {
+func SubParser(input string) types.SubMessage {
 	parts := strings.SplitN(input, " :", 2)
 	metadata := parts[0]
 	message := ""
@@ -19,7 +14,7 @@ func SubParser(input string) SubMessage {
 	if len(messageSplit) > 1 {
 		message = messageSplit[1]
 	}
-	subMessage := SubMessage{Message: message}
+	subMessage := types.SubMessage{Message: message}
 	keyValPairs := strings.Split(metadata, ";")
 	// TODO: Fix crash on no-message subs and gifts
 	for _, kvPair := range keyValPairs {

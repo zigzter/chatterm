@@ -4,24 +4,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/zigzter/chatterm/types"
 )
 
-type ChatMessage struct {
-	Timestamp      string
-	Color          string
-	DisplayName    string
-	IsFirstMessage bool
-	IsMod          bool
-	IsVIP          bool
-	Message        string
-}
-
-func MessageParser(input string) ChatMessage {
+func MessageParser(input string) types.ChatMessage {
 	parts := strings.SplitN(input, " :", 2)
 	metadata := parts[0]
 	message := strings.Split(parts[1], " :")[1]
 	keyValPairs := strings.Split(metadata, ";")
-	chatMessage := ChatMessage{Message: message}
+	chatMessage := types.ChatMessage{Message: message}
 	for _, kvPair := range keyValPairs {
 		kv := strings.Split(kvPair, "=")
 		if len(kv) == 2 {

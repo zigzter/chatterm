@@ -6,7 +6,6 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/zigzter/chatterm/utils"
 )
@@ -19,9 +18,9 @@ var connectCmd = &cobra.Command{
 	Long:  `Connects to a Twitch chat`,
 	Run: func(cmd *cobra.Command, args []string) {
 		utils.InitConfig()
-		username := viper.GetString("username")
-		oauth := viper.GetString("oauth")
-		go utils.EstablishWSConnection(Channel, username, oauth)
+		// username := viper.GetString("username")
+		// oauth := viper.GetString("oauth")
+		// go utils.EstablishWSConnection(Channel, username, oauth)
 
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)

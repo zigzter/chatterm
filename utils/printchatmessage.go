@@ -2,9 +2,11 @@ package utils
 
 import (
 	"fmt"
+
+	"github.com/zigzter/chatterm/types"
 )
 
-func PrintChatMessage(message ChatMessage) {
+func PrintChatMessage(message types.ChatMessage) {
 	icon := ""
 	bgColor := ""
 	if message.IsFirstMessage {

@@ -4,11 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/zigzter/chatterm/types"
 )
 
 func TestMessageParser(t *testing.T) {
 	got := MessageParser(RawChatMessage)
-	want := ChatMessage{
+	want := types.ChatMessage{
 		Color:          "#00F8FF",
 		DisplayName:    "zigzter",
 		IsFirstMessage: false,
