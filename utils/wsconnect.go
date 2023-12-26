@@ -14,6 +14,7 @@ var (
 	subRegex  *regexp.Regexp = regexp.MustCompile(`\bUSERNOTICE\b`)
 	joinRegex *regexp.Regexp = regexp.MustCompile(`\bJOIN\b`)
 	partRegex *regexp.Regexp = regexp.MustCompile(`\bPART\b`)
+	pingRegex *regexp.Regexp = regexp.MustCompile(`\bPING\b`)
 	cmdRegex  *regexp.Regexp = regexp.MustCompile(`^!(\w+)\s?(\w+)?`)
 )
 
@@ -29,7 +30,6 @@ func EstablishWSConnection(channel string, username string, oath string) {
 		log.Println("Error writing message:", err1)
 	}
 	setPass := fmt.Sprintf("PASS %s", oath)
-	log.Println(setPass)
 	conn.WriteMessage(websocket.TextMessage, []byte(setPass))
 	setUser := fmt.Sprintf("NICK %s", username)
 	conn.WriteMessage(websocket.TextMessage, []byte(setUser))
@@ -54,6 +54,8 @@ func EstablishWSConnection(channel string, username string, oath string) {
 				// TODO: handle joins?
 			} else if partRegex.MatchString(rawIrcMessage) {
 				// TODO: handle parts?
+			} else if pingRegex.MatchString(rawIrcMessage) {
+				conn.WriteMessage(websocket.TextMessage, []byte("PONG :tmi.twitch.tv"))
 			} else {
 				fmt.Println(rawIrcMessage)
 			}

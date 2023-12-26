@@ -14,9 +14,13 @@ type SubMessage struct {
 func SubParser(input string) SubMessage {
 	parts := strings.SplitN(input, " :", 2)
 	metadata := parts[0]
-	message := strings.Split(parts[1], " :")[1]
-	keyValPairs := strings.Split(metadata, ";")
+	message := ""
+	messageSplit := strings.Split(parts[1], " :")
+	if len(messageSplit) > 1 {
+		message = messageSplit[1]
+	}
 	subMessage := SubMessage{Message: message}
+	keyValPairs := strings.Split(metadata, ";")
 	// TODO: Fix crash on no-message subs and gifts
 	for _, kvPair := range keyValPairs {
 		kv := strings.Split(kvPair, "=")

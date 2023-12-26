@@ -1,9 +1,14 @@
 package utils
 
 import (
-    "fmt"
+	"fmt"
 )
 
 func PrintSubMessage(message SubMessage) {
-    fmt.Printf("%s subscribed for %s months: %s", message.DisplayName, message.Months, message.Message)
+	fmt.Printf(
+		"%s subscribed for %s months: %s",
+		message.DisplayName,
+		message.Months,
+		message.Message,
+	)
 }
