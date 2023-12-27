@@ -54,7 +54,7 @@ func EstablishWSConnection(channel string, username string, oath string, msgChan
 				msgChan <- types.ChatMessageWrap{ChatMsg: chatMessage}
 			} else if subRegex.MatchString(rawIrcMessage) {
 				subMessage := SubParser(rawIrcMessage)
-				PrintSubMessage(subMessage)
+				msgChan <- types.ChatMessageWrap{ChatMsg: subMessage}
 			} else if joinRegex.MatchString(rawIrcMessage) {
 				// TODO: handle joins?
 			} else if partRegex.MatchString(rawIrcMessage) {

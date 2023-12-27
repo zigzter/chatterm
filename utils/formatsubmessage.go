@@ -6,9 +6,9 @@ import (
 	"github.com/zigzter/chatterm/types"
 )
 
-func PrintSubMessage(message types.SubMessage) {
-	fmt.Printf(
-		"%s subscribed for %s months: %s",
+func FormatSubMessage(message types.SubMessage) string {
+	return fmt.Sprintf(
+		"%s subscribed for %s months: %s\n",
 		message.DisplayName,
 		message.Months,
 		message.Message,

@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/bubbletea"
@@ -30,7 +32,7 @@ func InitialModel() model {
 	username := viper.GetString("username")
 	oauth := viper.GetString("oauth")
 	msgChan := make(chan types.ChatMessageWrap, 100)
-	go utils.EstablishWSConnection("summit1g", username, oauth, msgChan)
+	go utils.EstablishWSConnection("ml7support", username, oauth, msgChan)
 	return model{
 		messages:  []types.ChatMessage{},
 		input:     "",
@@ -56,6 +58,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
+		case tea.KeyEnter:
+			m.chatContent += fmt.Sprintf("You: %s", m.textinput.Value())
+			return m, listenToWebSocket(m.msgChan)
 		}
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
@@ -63,13 +68,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.Height = m.height
 		return m, listenToWebSocket(m.msgChan)
 	case types.ChatMessageWrap:
-		m.chatContent += utils.FormatChatMessage(msg.ChatMsg)
-		m.viewport.SetContent(m.chatContent)
+		switch msg := msg.ChatMsg.(type) {
+		case types.ChatMessage:
+			m.chatContent += utils.FormatChatMessage(msg)
+			m.viewport.SetContent(m.chatContent)
+		case types.SubMessage:
+			m.chatContent += utils.FormatSubMessage(msg)
+			m.viewport.SetContent(m.chatContent)
+		}
+		m.viewport.YOffset = m.viewport.TotalLineCount() - m.viewport.Height
+		if m.viewport.YOffset < 0 {
+			m.viewport.YOffset = 0
+		}
 		return m, listenToWebSocket(m.msgChan)
+
 	}
 	return m, listenToWebSocket(m.msgChan)
 }
 
 func (m model) View() string {
-	return m.viewport.View()
+	return fmt.Sprintf("%s\n%s", m.viewport.View(), m.textinput.View())
 }
