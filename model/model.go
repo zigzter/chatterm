@@ -23,16 +23,16 @@ type model struct {
 }
 
 func InitialModel() model {
-	ti := textinput.New()
-	ti.Focus()
-	ti.CharLimit = 256
 	vp := viewport.New(84, 24)
 	vp.SetContent("")
 	utils.InitConfig()
 	username := viper.GetString("username")
 	oauth := viper.GetString("oauth")
 	msgChan := make(chan types.ChatMessageWrap, 100)
-	go utils.EstablishWSConnection("ml7support", username, oauth, msgChan)
+	go utils.EstablishWSConnection("a_seagull", username, oauth, msgChan)
+	ti := textinput.New()
+	ti.CharLimit = 256
+	ti.Focus()
 	return model{
 		messages:  []types.ChatMessage{},
 		input:     "",
@@ -53,13 +53,15 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		case tea.KeyEnter:
-			m.chatContent += fmt.Sprintf("You: %s", m.textinput.Value())
+			m.chatContent += fmt.Sprintf("You: %s\n", m.textinput.Value())
+			m.textinput.SetValue("")
 			return m, listenToWebSocket(m.msgChan)
 		}
 	case tea.WindowSizeMsg:
@@ -83,7 +85,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, listenToWebSocket(m.msgChan)
 
 	}
-	return m, listenToWebSocket(m.msgChan)
+	m.textinput, cmd = m.textinput.Update(msg)
+	return m, cmd
 }
 
 func (m model) View() string {
