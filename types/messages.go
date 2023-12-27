@@ -16,3 +16,7 @@ type SubMessage struct {
 	Months      string
 	Streak      string
 }
+
+type ChatMessageWrap struct {
+	ChatMsg ChatMessage
+}

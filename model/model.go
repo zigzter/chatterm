@@ -2,19 +2,20 @@ package model
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/bubbletea"
+	"github.com/spf13/viper"
 	"github.com/zigzter/chatterm/types"
+	"github.com/zigzter/chatterm/utils"
 )
-
-type ChatMessageWrap struct {
-	ChatMsg types.ChatMessage
-}
 
 type model struct {
 	messages     []types.ChatMessage
+	msgChan      chan types.ChatMessageWrap
+	chatContent  string
 	input        string
 	inputFocused bool
 	textinput    textinput.Model
@@ -26,7 +27,7 @@ func InitialModel() model {
 	ti.Focus()
 	ti.CharLimit = 256
 	vp := viewport.New(30, 5)
-	vp.SetContent("Hello there...")
+	vp.SetContent("")
 	return model{
 		messages:     []types.ChatMessage{},
 		input:        "",
@@ -37,16 +38,16 @@ func InitialModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return textinput.Blink
+	utils.InitConfig()
+	username := viper.GetString("username")
+	oauth := viper.GetString("oauth")
+	m.msgChan = make(chan types.ChatMessageWrap, 50)
+	go utils.EstablishWSConnection("Flats", username, oauth, m.msgChan)
+	return nil
 }
 
-type (
-	inputMessage   string
-	newChatMessage string
-)
-
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
+	log.Printf("Received message type: %T\n", msg)
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -62,11 +63,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		}
-	case ChatMessageWrap:
-		m.messages = append(m.messages, msg.ChatMsg)
+	case types.ChatMessageWrap:
+		m.chatContent += fmt.Sprintf("%s: %s\n", msg.ChatMsg.DisplayName, msg.ChatMsg.Message)
+		m.viewport.SetContent(m.chatContent)
+	default:
+		return m, nil
 	}
-	m.textinput, cmd = m.textinput.Update(msg)
-	return m, cmd
+	return m, nil
 }
 
 func (m model) View() string {
