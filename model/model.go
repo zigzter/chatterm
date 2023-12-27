@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -13,69 +12,66 @@ import (
 )
 
 type model struct {
-	messages     []types.ChatMessage
-	msgChan      chan types.ChatMessageWrap
-	chatContent  string
-	input        string
-	inputFocused bool
-	textinput    textinput.Model
-	viewport     viewport.Model
+	messages    []types.ChatMessage
+	msgChan     chan types.ChatMessageWrap
+	chatContent string
+	input       string
+	textinput   textinput.Model
+	viewport    viewport.Model
+	width       int
+	height      int
 }
 
 func InitialModel() model {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 256
-	vp := viewport.New(30, 5)
+	vp := viewport.New(84, 24)
 	vp.SetContent("")
+	utils.InitConfig()
+	username := viper.GetString("username")
+	oauth := viper.GetString("oauth")
+	msgChan := make(chan types.ChatMessageWrap, 100)
+	go utils.EstablishWSConnection("summit1g", username, oauth, msgChan)
 	return model{
-		messages:     []types.ChatMessage{},
-		input:        "",
-		inputFocused: true,
-		textinput:    ti,
-		viewport:     vp,
+		messages:  []types.ChatMessage{},
+		input:     "",
+		textinput: ti,
+		viewport:  vp,
+		msgChan:   msgChan,
+	}
+}
+
+func listenToWebSocket(msgChan <-chan types.ChatMessageWrap) tea.Cmd {
+	return func() tea.Msg {
+		return <-msgChan
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	utils.InitConfig()
-	username := viper.GetString("username")
-	oauth := viper.GetString("oauth")
-	m.msgChan = make(chan types.ChatMessageWrap, 50)
-	go utils.EstablishWSConnection("Flats", username, oauth, m.msgChan)
-	return nil
+	return listenToWebSocket(m.msgChan)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	log.Printf("Received message type: %T\n", msg)
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyRunes:
-			m.input += string(msg.Runes)
-		case tea.KeyBackspace:
-			if len(m.input) > 0 {
-				m.input = m.input[:len(m.input)-1]
-			}
-		case tea.KeyEnter:
-			// TODO: send to Twitch here
-			m.textinput.Update("")
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		}
+	case tea.WindowSizeMsg:
+		m.width, m.height = msg.Width, msg.Height
+		m.viewport.Width = m.width
+		m.viewport.Height = m.height
+		return m, listenToWebSocket(m.msgChan)
 	case types.ChatMessageWrap:
 		m.chatContent += fmt.Sprintf("%s: %s\n", msg.ChatMsg.DisplayName, msg.ChatMsg.Message)
 		m.viewport.SetContent(m.chatContent)
-	default:
-		return m, nil
+		return m, listenToWebSocket(m.msgChan)
 	}
-	return m, nil
+	return m, listenToWebSocket(m.msgChan)
 }
 
 func (m model) View() string {
-	return fmt.Sprintf(
-		"%s\n\n%s",
-		m.viewport.View(),
-		m.textinput.View(),
-	) + "\n\n"
+	return m.viewport.View()
 }

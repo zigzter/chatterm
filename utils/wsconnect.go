@@ -52,7 +52,6 @@ func EstablishWSConnection(channel string, username string, oath string, msgChan
 			if msgRegex.MatchString(rawIrcMessage) {
 				chatMessage := MessageParser(rawIrcMessage)
 				msgChan <- types.ChatMessageWrap{ChatMsg: chatMessage}
-				// PrintChatMessage(chatMessage)
 			} else if subRegex.MatchString(rawIrcMessage) {
 				subMessage := SubParser(rawIrcMessage)
 				PrintSubMessage(subMessage)
@@ -63,7 +62,7 @@ func EstablishWSConnection(channel string, username string, oath string, msgChan
 			} else if pingRegex.MatchString(rawIrcMessage) {
 				conn.WriteMessage(websocket.TextMessage, []byte("PONG :tmi.twitch.tv"))
 			} else {
-				fmt.Println(rawIrcMessage)
+				// fmt.Println(rawIrcMessage)
 			}
 		}
 	}
