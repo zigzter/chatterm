@@ -8,7 +8,14 @@ import (
 )
 
 func main() {
-	p := tea.NewProgram(model.InitialModel())
+	f, err := tea.LogToFile("debug.log", "debug")
+	if err != nil {
+		log.Fatalf("err: %w", err)
+	}
+	defer f.Close()
+	m := model.InitialModel()
+	defer m.WsClient.Conn.Close()
+	p := tea.NewProgram(m)
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}

@@ -19,30 +19,37 @@ var (
 	cmdRegex  *regexp.Regexp = regexp.MustCompile(`^!(\w+)\s?(\w+)?`)
 )
 
-type rawTwitchMessage struct {
-	content string
+type WebSocketClient struct {
+	Conn *websocket.Conn
 }
 
-func EstablishWSConnection(channel string, username string, oath string, msgChan chan<- types.ChatMessageWrap) {
+func NewWebSocketClient() (*WebSocketClient, error) {
 	socketUrl := "ws://irc-ws.chat.twitch.tv:80"
 	conn, _, err := websocket.DefaultDialer.Dial(socketUrl, nil)
 	if err != nil {
-		log.Fatal("Error connecting to socket server:", err)
+		return nil, err
 	}
-	defer conn.Close()
-	err1 := conn.WriteMessage(websocket.TextMessage, []byte("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands"))
+	return &WebSocketClient{Conn: conn}, nil
+}
+
+func (client *WebSocketClient) SendMessage(message []byte) error {
+	return client.Conn.WriteMessage(websocket.TextMessage, message)
+}
+
+func EstablishWSConnection(client *WebSocketClient, channel string, username string, oath string, msgChan chan<- types.ChatMessageWrap) {
+	err1 := client.SendMessage([]byte("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands"))
 	if err1 != nil {
 		log.Println("Error writing message:", err1)
 	}
 	setPass := fmt.Sprintf("PASS %s", oath)
-	conn.WriteMessage(websocket.TextMessage, []byte(setPass))
+	client.SendMessage([]byte(setPass))
 	setUser := fmt.Sprintf("NICK %s", username)
-	conn.WriteMessage(websocket.TextMessage, []byte(setUser))
+	client.SendMessage([]byte(setUser))
 	joinChannel := fmt.Sprintf("JOIN #%s", channel)
-	conn.WriteMessage(websocket.TextMessage, []byte(joinChannel))
+	client.SendMessage([]byte(joinChannel))
 	for {
 		// Read messages and handle them
-		messageType, message, err := conn.ReadMessage()
+		messageType, message, err := client.Conn.ReadMessage()
 		if err != nil {
 			log.Printf("Error reading WebSocket message: %v", err)
 			return
@@ -60,7 +67,7 @@ func EstablishWSConnection(channel string, username string, oath string, msgChan
 			} else if partRegex.MatchString(rawIrcMessage) {
 				// TODO: handle parts?
 			} else if pingRegex.MatchString(rawIrcMessage) {
-				conn.WriteMessage(websocket.TextMessage, []byte("PONG :tmi.twitch.tv"))
+				client.SendMessage([]byte("PONG :tmi.twitch.tv"))
 			} else {
 				// fmt.Println(rawIrcMessage)
 			}

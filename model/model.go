@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -20,6 +21,7 @@ type model struct {
 	viewport    viewport.Model
 	width       int
 	height      int
+	WsClient    *utils.WebSocketClient
 }
 
 func InitialModel() model {
@@ -29,7 +31,11 @@ func InitialModel() model {
 	username := viper.GetString("username")
 	oauth := viper.GetString("oauth")
 	msgChan := make(chan types.ChatMessageWrap, 100)
-	go utils.EstablishWSConnection("a_seagull", username, oauth, msgChan)
+	wsClient, err := utils.NewWebSocketClient()
+	if err != nil {
+		log.Fatal("Failed to initialize socket client")
+	}
+	go utils.EstablishWSConnection(wsClient, "a_seagull", username, oauth, msgChan)
 	ti := textinput.New()
 	ti.CharLimit = 256
 	ti.Focus()
@@ -39,6 +45,7 @@ func InitialModel() model {
 		textinput: ti,
 		viewport:  vp,
 		msgChan:   msgChan,
+		WsClient:  wsClient,
 	}
 }
 
