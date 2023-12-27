@@ -6,7 +6,7 @@ import (
 	"github.com/zigzter/chatterm/types"
 )
 
-func PrintChatMessage(message types.ChatMessage) {
+func FormatChatMessage(message types.ChatMessage) string {
 	icon := ""
 	bgColor := ""
 	if message.IsFirstMessage {
@@ -23,7 +23,7 @@ func PrintChatMessage(message types.ChatMessage) {
 	color := ParseHexColor(message.Color)
 	resetCode := "\033[0m"
 	defaultTextColor := "\033[39m"
-	fmt.Printf(
+	return fmt.Sprintf(
 		"[%s]%s%s\033[38;2;%d;%d;%dm%s%s%s: %s%s\n",
 		message.Timestamp,
 		bgColor,

@@ -1,8 +1,6 @@
 package model
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/bubbletea"
@@ -65,7 +63,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.Height = m.height
 		return m, listenToWebSocket(m.msgChan)
 	case types.ChatMessageWrap:
-		m.chatContent += fmt.Sprintf("%s: %s\n", msg.ChatMsg.DisplayName, msg.ChatMsg.Message)
+		m.chatContent += utils.FormatChatMessage(msg.ChatMsg)
 		m.viewport.SetContent(m.chatContent)
 		return m, listenToWebSocket(m.msgChan)
 	}
