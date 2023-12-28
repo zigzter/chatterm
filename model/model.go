@@ -21,6 +21,7 @@ type model struct {
 	viewport    viewport.Model
 	width       int
 	height      int
+	channel     string
 	WsClient    *utils.WebSocketClient
 }
 
@@ -30,12 +31,13 @@ func InitialModel() model {
 	utils.InitConfig()
 	username := viper.GetString("username")
 	oauth := viper.GetString("oauth")
+	channel := viper.GetString("channel")
 	msgChan := make(chan types.ChatMessageWrap, 100)
 	wsClient, err := utils.NewWebSocketClient()
 	if err != nil {
 		log.Fatal("Failed to initialize socket client")
 	}
-	go utils.EstablishWSConnection(wsClient, "a_seagull", username, oauth, msgChan)
+	go utils.EstablishWSConnection(wsClient, channel, username, oauth, msgChan)
 	ti := textinput.New()
 	ti.CharLimit = 256
 	ti.Focus()
@@ -46,6 +48,7 @@ func InitialModel() model {
 		viewport:  vp,
 		msgChan:   msgChan,
 		WsClient:  wsClient,
+		channel:   channel,
 	}
 }
 
@@ -68,6 +71,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case tea.KeyEnter:
 			m.chatContent += fmt.Sprintf("You: %s\n", m.textinput.Value())
+			m.WsClient.SendMessage([]byte("PRIVMSG #" + m.channel + " :" + m.textinput.Value()))
 			m.textinput.SetValue("")
 			return m, listenToWebSocket(m.msgChan)
 		}
