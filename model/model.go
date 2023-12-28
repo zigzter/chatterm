@@ -72,7 +72,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEnter:
 			m.chatContent += fmt.Sprintf("You: %s\n", m.textinput.Value())
 			m.WsClient.SendMessage([]byte("PRIVMSG #" + m.channel + " :" + m.textinput.Value()))
-			m.textinput.SetValue("")
+			m.textinput.Reset()
 			return m, listenToWebSocket(m.msgChan)
 		}
 	case tea.WindowSizeMsg:
@@ -89,10 +89,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.chatContent += utils.FormatSubMessage(msg)
 			m.viewport.SetContent(m.chatContent)
 		}
-		m.viewport.YOffset = m.viewport.TotalLineCount() - m.viewport.Height
-		if m.viewport.YOffset < 0 {
-			m.viewport.YOffset = 0
-		}
+		m.viewport.GotoBottom()
 		return m, listenToWebSocket(m.msgChan)
 
 	}
@@ -101,5 +98,5 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return fmt.Sprintf("%s\n%s", m.viewport.View(), m.textinput.View())
+	return fmt.Sprintf("%s%s", m.viewport.View(), m.textinput.View())
 }
