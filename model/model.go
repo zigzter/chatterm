@@ -40,6 +40,7 @@ func InitialModel() model {
 	go utils.EstablishWSConnection(wsClient, channel, username, oauth, msgChan)
 	ti := textinput.New()
 	ti.CharLimit = 256
+	ti.Placeholder = "Scream into the void..."
 	ti.Focus()
 	return model{
 		messages:  []types.ChatMessage{},
@@ -71,6 +72,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case tea.KeyEnter:
 			m.chatContent += fmt.Sprintf("You: %s\n", m.textinput.Value())
+			m.viewport.SetContent(m.chatContent)
 			m.WsClient.SendMessage([]byte("PRIVMSG #" + m.channel + " :" + m.textinput.Value()))
 			m.textinput.Reset()
 			return m, listenToWebSocket(m.msgChan)
@@ -98,5 +100,5 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return fmt.Sprintf("%s%s", m.viewport.View(), m.textinput.View())
+	return fmt.Sprintf("%s\n%s", m.viewport.View(), m.textinput.View())
 }
