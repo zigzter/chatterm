@@ -1,4 +1,4 @@
-package model
+package models
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"github.com/zigzter/chatterm/utils"
 )
 
-type model struct {
+type ChatModel struct {
 	messages    []types.ChatMessage
 	msgChan     chan types.ChatMessageWrap
 	chatContent string
@@ -25,7 +25,7 @@ type model struct {
 	WsClient    *utils.WebSocketClient
 }
 
-func InitialModel() model {
+func InitialChatModel() ChatModel {
 	vp := viewport.New(84, 24)
 	vp.SetContent("")
 	utils.InitConfig()
@@ -42,7 +42,7 @@ func InitialModel() model {
 	ti.CharLimit = 256
 	ti.Placeholder = "Scream into the void..."
 	ti.Focus()
-	return model{
+	return ChatModel{
 		messages:  []types.ChatMessage{},
 		input:     "",
 		textinput: ti,
@@ -59,11 +59,11 @@ func listenToWebSocket(msgChan <-chan types.ChatMessageWrap) tea.Cmd {
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m ChatModel) Init() tea.Cmd {
 	return listenToWebSocket(m.msgChan)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -99,6 +99,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m ChatModel) View() string {
 	return fmt.Sprintf("%s\n%s", m.viewport.View(), m.textinput.View())
 }

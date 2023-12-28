@@ -7,7 +7,7 @@ Current flow (requires Go if cloning):
 1. Either clone and `go build .`, or download the binary under releases
 2. Grab a token from here: https://twitchapps.com/tmi/
 3. Run `./chatterm config` and enter your username and Oauth token when prompted (currently does not work, store chatterm.json manually in `~/.config/chatterm.json`)
-4. `./chatterm connect -c channelName`
+4. Run `./chatterm`
 
 Todo:
 
