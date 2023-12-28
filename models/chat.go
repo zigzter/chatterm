@@ -68,8 +68,6 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
-			return m, tea.Quit
 		case tea.KeyEnter:
 			m.chatContent += fmt.Sprintf("You: %s\n", m.textinput.Value())
 			m.viewport.SetContent(m.chatContent)

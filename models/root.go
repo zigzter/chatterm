@@ -1,6 +1,8 @@
 package models
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 type AppState int
 
@@ -18,8 +20,14 @@ type RootModel struct {
 }
 
 func InitialRootModel() RootModel {
+	channelInputModel := InitialChannelInputModel()
+	chatModel := InitialChatModel()
+	configModel := InitialConfigModel()
 	return RootModel{
-		State: 0,
+		State:        0,
+		ChannelInput: channelInputModel,
+		Chat:         chatModel,
+		Config:       configModel,
 	}
 }
 
