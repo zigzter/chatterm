@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -72,10 +73,17 @@ func (m ConfigModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "tab", "shift+tab", "enter", "up", "down":
 			s := msg.String()
-			// Did the user press enter while the submit button was focused?
-			// If so, exit.
 			if s == "enter" && m.focusIndex == len(m.inputs) {
-				return m, tea.Quit
+				username := m.inputs[0].Value()
+				oauth := m.inputs[1].Value()
+				viper.Set("username", username)
+				viper.Set("oauth", oauth)
+				if err := viper.WriteConfig(); err != nil {
+					fmt.Println("Error saving config:", err)
+				}
+				return m, tea.Cmd(func() tea.Msg {
+					return ChangeStateMsg{NewState: ChannelInputState}
+				})
 			}
 			if s == "up" || s == "shift+tab" {
 				m.focusIndex--

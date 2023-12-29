@@ -53,7 +53,9 @@ func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ChatState:
 		return m.Chat.Update(msg)
 	case ConfigState:
-		return m.Config.Update(msg)
+		newModel, cmd := m.Config.Update(msg)
+		m.Config = newModel.(ConfigModel)
+		return m, cmd
 	default:
 		return m, nil
 	}

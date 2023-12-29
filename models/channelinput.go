@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/viper"
+	"github.com/zigzter/chatterm/utils"
 )
 
 type ChannelInputModel struct {
@@ -13,6 +14,7 @@ type ChannelInputModel struct {
 }
 
 func InitialChannelInputModel() ChannelInputModel {
+	utils.InitConfig()
 	ti := textinput.New()
 	ti.Placeholder = "a_seagull"
 	ti.Focus()
@@ -56,6 +58,6 @@ func (m ChannelInputModel) View() string {
 	return fmt.Sprintf(
 		"Enter channel name:\n%s\n%s",
 		m.textinput.View(),
-		"(Type exit or press Ctrl+c to quit)",
+		"(Type exit or press Ctrl+c to quit. Ctrl+O for options)",
 	)
 }
