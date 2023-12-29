@@ -6,6 +6,10 @@ import (
 
 type AppState int
 
+type ChangeStateMsg struct {
+	NewState AppState
+}
+
 const (
 	ChannelInputState AppState = iota
 	ConfigState
@@ -36,9 +40,16 @@ func (m RootModel) Init() tea.Cmd {
 }
 
 func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case ChangeStateMsg:
+		m.State = msg.NewState
+		return m, nil
+	}
 	switch m.State {
 	case ChannelInputState:
-		return m.ChannelInput.Update(msg)
+		newModel, cmd := m.ChannelInput.Update(msg)
+		m.ChannelInput = newModel.(ChannelInputModel)
+		return m, cmd
 	case ChatState:
 		return m.Chat.Update(msg)
 	case ConfigState:
