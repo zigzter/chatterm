@@ -17,9 +17,9 @@ func InitialChannelInputModel() ChannelInputModel {
 	utils.InitConfig()
 	ti := textinput.New()
 	ti.Placeholder = "a_seagull"
-	configChannel := viper.Get("channel")
-	if configChannel != nil {
-		ti.Update(configChannel)
+	configChannel := viper.GetString("channel")
+	if configChannel != "" {
+		ti.SetValue(configChannel)
 	}
 	ti.Focus()
 	return ChannelInputModel{
