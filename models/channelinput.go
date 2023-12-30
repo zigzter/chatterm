@@ -17,6 +17,10 @@ func InitialChannelInputModel() ChannelInputModel {
 	utils.InitConfig()
 	ti := textinput.New()
 	ti.Placeholder = "a_seagull"
+	configChannel := viper.Get("channel")
+	if configChannel != nil {
+		ti.Update(configChannel)
+	}
 	ti.Focus()
 	return ChannelInputModel{
 		textinput: ti,
@@ -46,8 +50,9 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err := viper.WriteConfig(); err != nil {
 				fmt.Println("Error saving config:", err)
 			}
-			m.textinput.Reset()
-			return m, nil
+			return m, tea.Cmd(func() tea.Msg {
+				return ChangeStateMsg{NewState: ChatState}
+			})
 		}
 	}
 	m.textinput, cmd = m.textinput.Update(msg)

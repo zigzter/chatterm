@@ -13,7 +13,6 @@ import (
 )
 
 type ChatModel struct {
-	messages    []types.ChatMessage
 	msgChan     chan types.ChatMessageWrap
 	chatContent string
 	input       string
@@ -40,10 +39,9 @@ func InitialChatModel() ChatModel {
 	go utils.EstablishWSConnection(wsClient, channel, username, oauth, msgChan)
 	ti := textinput.New()
 	ti.CharLimit = 256
-	ti.Placeholder = "Scream into the void..."
+	ti.Placeholder = "..."
 	ti.Focus()
 	return ChatModel{
-		messages:  []types.ChatMessage{},
 		input:     "",
 		textinput: ti,
 		viewport:  vp,
@@ -68,6 +66,8 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
+		case tea.KeyCtrlC, tea.KeyEsc:
+			return m, tea.Quit
 		case tea.KeyEnter:
 			m.chatContent += fmt.Sprintf("You: %s\n", m.textinput.Value())
 			m.viewport.SetContent(m.chatContent)

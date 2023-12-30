@@ -17,21 +17,21 @@ const (
 )
 
 type RootModel struct {
-	State        AppState
-	Chat         ChatModel
-	ChannelInput ChannelInputModel
-	Config       ConfigModel
+	State             AppState
+	Chat              ChatModel
+	ChannelInput      ChannelInputModel
+	Config            ConfigModel
+	IsChatInitialized bool
 }
 
 func InitialRootModel() RootModel {
 	channelInputModel := InitialChannelInputModel()
-	chatModel := InitialChatModel()
 	configModel := InitialConfigModel()
 	return RootModel{
-		State:        0,
-		ChannelInput: channelInputModel,
-		Chat:         chatModel,
-		Config:       configModel,
+		State:             0,
+		ChannelInput:      channelInputModel,
+		Config:            configModel,
+		IsChatInitialized: false,
 	}
 }
 
@@ -51,7 +51,15 @@ func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ChannelInput = newModel.(ChannelInputModel)
 		return m, cmd
 	case ChatState:
-		return m.Chat.Update(msg)
+		if !m.IsChatInitialized {
+			m.Chat = InitialChatModel()
+			initCmd := m.Chat.Init()
+			m.IsChatInitialized = true
+			return m, initCmd
+		}
+		newModel, cmd := m.Chat.Update(msg)
+		m.Chat = newModel.(ChatModel)
+		return m, cmd
 	case ConfigState:
 		newModel, cmd := m.Config.Update(msg)
 		m.Config = newModel.(ConfigModel)

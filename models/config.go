@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/cursor"
@@ -79,7 +80,7 @@ func (m ConfigModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				viper.Set("username", username)
 				viper.Set("oauth", oauth)
 				if err := viper.WriteConfig(); err != nil {
-					fmt.Println("Error saving config:", err)
+					log.Println("Error saving config:", err)
 				}
 				return m, tea.Cmd(func() tea.Msg {
 					return ChangeStateMsg{NewState: ChannelInputState}

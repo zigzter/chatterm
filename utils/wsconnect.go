@@ -69,7 +69,7 @@ func EstablishWSConnection(client *WebSocketClient, channel string, username str
 			} else if pingRegex.MatchString(rawIrcMessage) {
 				client.SendMessage([]byte("PONG :tmi.twitch.tv"))
 			} else {
-				// fmt.Println(rawIrcMessage)
+				log.Println(rawIrcMessage)
 			}
 		}
 	}

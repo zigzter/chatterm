@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/zigzter/chatterm/models"
@@ -14,9 +16,17 @@ func main() {
 	}
 	defer f.Close()
 	m := models.InitialRootModel()
-	defer m.Chat.WsClient.Conn.Close()
 	p := tea.NewProgram(m)
+
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt)
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
+
+	go func() {
+		<-shutdown
+		m.Chat.WsClient.Conn.Close()
+		os.Exit(0)
+	}()
 }
