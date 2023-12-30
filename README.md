@@ -6,8 +6,8 @@ Current flow (requires Go if cloning):
 
 1. Either clone and `go build .`, or download the binary under releases
 2. Grab a token from here: https://twitchapps.com/tmi/
-3. Run `./chatterm config` and enter your username and Oauth token when prompted (currently does not work, store chatterm.json manually in `~/.config/chatterm.json`)
-4. Run `./chatterm`
+3. Run `./chatterm`, follow prompt to open options and input username and oauth.
+4. Once submitted, it should bring you back to the channel input view. Enter a channel to join and press enter.
 
 Todo:
 
@@ -17,3 +17,4 @@ Todo:
 - [ ] Customize chat output (show/hide badges, colors for first chatters, etc)
 - [ ] Perform moderator actions
 
+Twitch [announced](https://discuss.dev.twitch.com/t/deprecation-of-chat-commands-through-irc/40486) awhile back that mod commands via IRC will no longer work, and instead have to go through their API. This has put a bit of a damper on my moderator actions plan. I'll have to figure out a way to utilize the API while still letting the app be useable by other people.
