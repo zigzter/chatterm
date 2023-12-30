@@ -34,19 +34,26 @@ func InitialConfigModel() ConfigModel {
 	m := ConfigModel{
 		inputs: make([]textinput.Model, 2),
 	}
+	username := viper.GetString("username")
+	oauth := viper.GetString("oauth")
 	var t textinput.Model
 	for i := range m.inputs {
 		t = textinput.New()
+		t.Cursor.Style = cursorStyle
 		t.CharLimit = 64
 
 		switch i {
 		case 0:
 			t.Placeholder = "Twitch username"
+			t.SetValue(username)
 			t.Focus()
+			t.PromptStyle = focusedStyle
+			t.TextStyle = focusedStyle
 		case 1:
 			t.Placeholder = "Oauth token"
 			t.EchoMode = textinput.EchoPassword
 			t.EchoCharacter = '•'
+			t.SetValue(oauth)
 		}
 
 		m.inputs[i] = t
@@ -55,7 +62,7 @@ func InitialConfigModel() ConfigModel {
 }
 
 func (m ConfigModel) Init() tea.Cmd {
-	return nil
+	return textinput.Blink
 }
 
 func (m *ConfigModel) updateInputs(msg tea.Msg) tea.Cmd {
@@ -127,7 +134,6 @@ func (m ConfigModel) View() string {
 		button = &focusedButton
 	}
 	fmt.Fprintf(&b, "\n\n%s\n\n", *button)
-	b.WriteString(helpStyle.Render("cursor mode is "))
-	b.WriteString(cursorModeHelpStyle.Render(m.cursorMode.String()))
+	b.WriteString(helpStyle.Render("Tab/Down/Enter to move down, Shift-Tab/Up to go up"))
 	return b.String()
 }
