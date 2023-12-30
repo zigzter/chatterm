@@ -39,9 +39,7 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		case tea.KeyCtrlO:
-			return m, tea.Cmd(func() tea.Msg {
-				return ChangeStateMsg{NewState: ConfigState}
-			})
+			return ChangeView(m, ConfigState)
 		case tea.KeyEnter:
 			if m.textinput.Value() == "exit" {
 				return m, tea.Quit
@@ -50,9 +48,7 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err := viper.WriteConfig(); err != nil {
 				fmt.Println("Error saving config:", err)
 			}
-			return m, tea.Cmd(func() tea.Msg {
-				return ChangeStateMsg{NewState: ChatState}
-			})
+			return ChangeView(m, ChatState)
 		}
 	}
 	m.textinput, cmd = m.textinput.Update(msg)

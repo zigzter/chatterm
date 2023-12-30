@@ -82,9 +82,7 @@ func (m ConfigModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err := viper.WriteConfig(); err != nil {
 					log.Println("Error saving config:", err)
 				}
-				return m, tea.Cmd(func() tea.Msg {
-					return ChangeStateMsg{NewState: ChannelInputState}
-				})
+				return ChangeView(m, ChannelInputState)
 			}
 			if s == "up" || s == "shift+tab" {
 				m.focusIndex--
