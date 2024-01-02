@@ -14,7 +14,6 @@ func InitConfig() {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			fmt.Println("Config file not found, creating a new one...")
 			viper.Set("username", "")
-			viper.Set("oauth", "")
 			if err := viper.SafeWriteConfig(); err != nil {
 				fmt.Println("Error creating config file:", err)
 			}

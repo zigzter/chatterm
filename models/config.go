@@ -32,10 +32,9 @@ type ConfigModel struct {
 
 func InitialConfigModel() ConfigModel {
 	m := ConfigModel{
-		inputs: make([]textinput.Model, 2),
+		inputs: make([]textinput.Model, 1),
 	}
 	username := viper.GetString("username")
-	oauth := viper.GetString("oauth")
 	var t textinput.Model
 	for i := range m.inputs {
 		t = textinput.New()
@@ -49,11 +48,6 @@ func InitialConfigModel() ConfigModel {
 			t.Focus()
 			t.PromptStyle = focusedStyle
 			t.TextStyle = focusedStyle
-		case 1:
-			t.Placeholder = "Oauth token"
-			t.EchoMode = textinput.EchoPassword
-			t.EchoCharacter = '•'
-			t.SetValue(oauth)
 		}
 
 		m.inputs[i] = t
@@ -83,9 +77,7 @@ func (m ConfigModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			s := msg.String()
 			if s == "enter" && m.focusIndex == len(m.inputs) {
 				username := m.inputs[0].Value()
-				oauth := m.inputs[1].Value()
 				viper.Set("username", username)
-				viper.Set("oauth", oauth)
 				if err := viper.WriteConfig(); err != nil {
 					log.Println("Error saving config:", err)
 				}

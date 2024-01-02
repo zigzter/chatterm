@@ -29,7 +29,7 @@ func InitialChatModel() ChatModel {
 	vp.SetContent("")
 	utils.InitConfig()
 	username := viper.GetString("username")
-	oauth := viper.GetString("oauth")
+	oauth := fmt.Sprintf("oauth:%s", viper.GetString("token"))
 	channel := viper.GetString("channel")
 	msgChan := make(chan types.ChatMessageWrap, 100)
 	wsClient, err := utils.NewWebSocketClient()
