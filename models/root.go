@@ -14,6 +14,7 @@ const (
 	ChannelInputState AppState = iota
 	ConfigState
 	ChatState
+	AuthState
 )
 
 type RootModel struct {
@@ -21,16 +22,19 @@ type RootModel struct {
 	Chat              ChatModel
 	ChannelInput      ChannelInputModel
 	Config            ConfigModel
+	Auth              AuthModel
 	IsChatInitialized bool
 }
 
 func InitialRootModel() RootModel {
 	channelInputModel := InitialChannelInputModel()
 	configModel := InitialConfigModel()
+	authModel := InitialAuthModel()
 	return RootModel{
 		State:             0,
 		ChannelInput:      channelInputModel,
 		Config:            configModel,
+		Auth:              authModel,
 		IsChatInitialized: false,
 	}
 }
@@ -72,6 +76,10 @@ func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		newModel, cmd := m.Config.Update(msg)
 		m.Config = newModel.(ConfigModel)
 		return m, cmd
+	case AuthState:
+		newModel, cmd := m.Auth.Update(msg)
+		m.Auth = newModel.(AuthModel)
+		return m, cmd
 	default:
 		return m, nil
 	}
@@ -85,6 +93,8 @@ func (m RootModel) View() string {
 		return m.Chat.View()
 	case ConfigState:
 		return m.Config.View()
+	case AuthState:
+		return m.Auth.View()
 	default:
 		return ""
 	}

@@ -40,6 +40,8 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case tea.KeyCtrlO:
 			return ChangeView(m, ConfigState)
+		case tea.KeyCtrlA:
+			return ChangeView(m, AuthState)
 		case tea.KeyEnter:
 			if m.textinput.Value() == "exit" {
 				return m, tea.Quit
