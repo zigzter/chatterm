@@ -46,10 +46,9 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.textinput.Value() == "exit" {
 				return m, tea.Quit
 			}
-			viper.Set("channel", m.textinput.Value())
-			if err := viper.WriteConfig(); err != nil {
-				fmt.Println("Error saving config:", err)
-			}
+			utils.SaveConfig(map[string]interface{}{
+				"channel": m.textinput.Value(),
+			})
 			return ChangeView(m, ChatState)
 		}
 	}

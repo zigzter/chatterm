@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/spf13/viper"
 	"github.com/zigzter/chatterm/types"
 	"github.com/zigzter/chatterm/utils"
 )
@@ -18,10 +17,9 @@ func startLocalServer(ready chan<- struct{}) {
 	http.HandleFunc("/token/", func(w http.ResponseWriter, r *http.Request) {
 		token := strings.TrimPrefix(r.URL.Path, "/token/")
 		if token != "" {
-			viper.Set("token", token)
-			if err := viper.WriteConfig(); err != nil {
-				log.Println("Error saving config:", err)
-			}
+			utils.SaveConfig(map[string]interface{}{
+				"token": token,
+			})
 			fmt.Fprintln(w, "Token received, you can close this window.")
 		} else {
 			fmt.Fprintln(w, "Failed to retrieve token.")

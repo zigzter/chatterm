@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/cursor"
@@ -10,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/viper"
+	"github.com/zigzter/chatterm/utils"
 )
 
 var (
@@ -77,10 +77,9 @@ func (m ConfigModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			s := msg.String()
 			if s == "enter" && m.focusIndex == len(m.inputs) {
 				username := m.inputs[0].Value()
-				viper.Set("username", username)
-				if err := viper.WriteConfig(); err != nil {
-					log.Println("Error saving config:", err)
-				}
+				utils.SaveConfig(map[string]interface{}{
+					"username": username,
+				})
 				return ChangeView(m, ChannelInputState)
 			}
 			if s == "up" || s == "shift+tab" {

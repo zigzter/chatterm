@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/spf13/viper"
 )
@@ -12,13 +12,22 @@ func InitConfig() {
 	viper.AddConfigPath("$HOME/.config/")
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			fmt.Println("Config file not found, creating a new one...")
+			log.Println("Config file not found, creating a new one...")
 			viper.Set("username", "")
 			if err := viper.SafeWriteConfig(); err != nil {
-				fmt.Println("Error creating config file:", err)
+				log.Println("Error creating config file:", err)
 			}
 		} else {
-			fmt.Println("Error reading config file:", err)
+			log.Println("Error reading config file:", err)
 		}
+	}
+}
+
+func SaveConfig(options map[string]interface{}) {
+	for key, value := range options {
+		viper.Set(key, value)
+	}
+	if err := viper.WriteConfig(); err != nil {
+		log.Println("Error saving config:", err)
 	}
 }
