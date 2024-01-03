@@ -76,10 +76,7 @@ func (m ConfigModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "tab", "shift+tab", "enter", "up", "down":
 			s := msg.String()
 			if s == "enter" && m.focusIndex == len(m.inputs) {
-				username := m.inputs[0].Value()
-				utils.SaveConfig(map[string]interface{}{
-					"username": username,
-				})
+				// TODO: handle submit
 				return ChangeView(m, ChannelInputState)
 			}
 			if s == "up" || s == "shift+tab" {

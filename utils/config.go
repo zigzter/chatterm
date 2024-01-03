@@ -6,7 +6,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-func InitConfig() {
+// Sets up the config, creating if necessary.
+// Returns a boolean, true if authentication is required
+func InitConfig() (requiresAuth bool) {
 	viper.SetConfigName("chatterm")
 	viper.SetConfigType("json")
 	viper.AddConfigPath("$HOME/.config/")
@@ -17,10 +19,12 @@ func InitConfig() {
 			if err := viper.SafeWriteConfig(); err != nil {
 				log.Println("Error creating config file:", err)
 			}
+			return true
 		} else {
 			log.Println("Error reading config file:", err)
 		}
 	}
+	return false
 }
 
 func SaveConfig(options map[string]interface{}) {

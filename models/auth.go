@@ -5,12 +5,25 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/zigzter/chatterm/twitch"
 	"github.com/zigzter/chatterm/types"
+	"github.com/zigzter/chatterm/utils"
 )
 
+const (
+	minUsernameLength = 4
+	maxUsernameLength = 24
+)
+
+func isValidUsernameLength(input textinput.Model) bool {
+	length := len(input.Value())
+	return length >= minUsernameLength && length <= maxUsernameLength
+}
+
 type AuthModel struct {
+	input             textinput.Model
 	spinner           spinner.Model
 	serverStarting    bool
 	serverStarted     bool
@@ -24,7 +37,12 @@ type AuthModel struct {
 func InitialAuthModel() AuthModel {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
+	ti := textinput.New()
+	ti.Placeholder = "Twitch username"
+	ti.CharLimit = maxUsernameLength
+	ti.Focus()
 	return AuthModel{
+		input:             ti,
 		spinner:           s,
 		externalMsgs:      make(chan tea.Msg, 10),
 		serverStarting:    false,
@@ -47,26 +65,34 @@ func (m AuthModel) Init() tea.Cmd {
 }
 
 func (m AuthModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
-		case "f":
-			m.serverStarting = true
-			ready := make(chan struct{}, 1)
-			cmd = tea.Batch(
-				twitch.StartLocalServer(ready, m.externalMsgs),
-				listenForExternalMsgs(m.externalMsgs),
-			)
+		case "enter":
+			if isValidUsernameLength(m.input) {
+				username := m.input.Value()
+				utils.SaveConfig(map[string]interface{}{
+					"username": username,
+				})
+				m.serverStarting = true
+				ready := make(chan struct{}, 1)
+				cmds = append(
+					cmds,
+					twitch.StartLocalServer(ready, m.externalMsgs),
+					listenForExternalMsgs(m.externalMsgs),
+				)
+			}
 		case "c":
 			return ChangeView(m, ChannelInputState)
 		}
 	case types.ServerStartedMsg:
 		m.serverStarting = false
 		m.serverStarted = true
-		cmd = tea.Batch(
+		cmds = append(
+			cmds,
 			twitch.PromptTwitchAuth(),
 			listenForExternalMsgs(m.externalMsgs),
 		)
@@ -82,16 +108,28 @@ func (m AuthModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.tokenReceiving = false
 		m.tokenReceived = true
 	}
-	if cmd == nil {
-		cmd = listenForExternalMsgs(m.externalMsgs)
+	if cmd := listenForExternalMsgs(m.externalMsgs); cmd != nil {
+		cmds = append(cmds, cmd)
 	}
-	return m, cmd
+	var inputCmd tea.Cmd
+	m.input, inputCmd = m.input.Update(msg)
+	if inputCmd != nil {
+		cmds = append(cmds, inputCmd)
+	}
+	return m, tea.Batch(cmds...)
 }
 
 func (m AuthModel) View() string {
 	var b strings.Builder
 	check := ""
-	fmt.Fprint(&b, "Press [f] to start auth, [c] to cancel\n")
+	fmt.Fprintf(
+		&b,
+		"Enter channel name:\n%s\n",
+		m.input.View(),
+	)
+	if isValidUsernameLength(m.input) {
+		fmt.Fprintln(&b, "Press [enter] to start authentication process")
+	}
 	if m.serverStarting {
 		fmt.Fprintln(&b, "Starting server...", m.spinner.View())
 	} else if m.serverStarted {
