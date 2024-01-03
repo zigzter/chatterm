@@ -5,9 +5,8 @@ Twitch chat in the terminal. Using Bubble Tea for the terminal UI, Gorilla WebSo
 Current flow (requires Go if cloning):
 
 1. Either clone and `go build .`, or download the binary under releases
-2. Grab a token from here: https://twitchapps.com/tmi/
-3. Run `./chatterm`, follow prompt to open options and input username and oauth.
-4. Once submitted, it should bring you back to the channel input view. Enter a channel to join and press enter.
+2. Run `./chatterm`, follow prompt to open auth and input username and start auth process.
+3. Once submitted, it should bring you back to the channel input view. Enter a channel to join and press enter.
 
 Todo:
 
