@@ -1,3 +1,5 @@
+<html>
+
 <head>
     <title>Authentication</title>
 </head>
@@ -11,7 +13,9 @@
                 result[parts[0]] = parts[1];
                 return result;
             }, {});
-            window.location.href = 'http://localhost:3030/token/' + result.access_token;
+            setTimeout(() => {
+                window.location.href = 'http://localhost:3030/token/' + result.access_token;
+            }, 500)
         };
     </script>
     <p>Authentication in progress...</p>

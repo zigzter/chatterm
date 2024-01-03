@@ -11,57 +11,102 @@ import (
 )
 
 type AuthModel struct {
-	fetching bool
-	error    string
-	spinner  spinner.Model
+	spinner           spinner.Model
+	serverStarting    bool
+	serverStarted     bool
+	authPromptOpening bool
+	authPrompOpened   bool
+	tokenReceiving    bool
+	tokenReceived     bool
+	externalMsgs      chan tea.Msg
 }
 
 func InitialAuthModel() AuthModel {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	return AuthModel{
-		spinner:  s,
-		fetching: false,
-		error:    "",
+		spinner:           s,
+		externalMsgs:      make(chan tea.Msg, 10),
+		serverStarting:    false,
+		serverStarted:     false,
+		authPromptOpening: false,
+		authPrompOpened:   false,
+		tokenReceiving:    false,
+		tokenReceived:     false,
+	}
+}
+
+func listenForExternalMsgs(externalMsgs chan tea.Msg) tea.Cmd {
+	return func() tea.Msg {
+		return <-externalMsgs
 	}
 }
 
 func (m AuthModel) Init() tea.Cmd {
-	return nil
+	return listenForExternalMsgs(m.externalMsgs)
 }
 
 func (m AuthModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "f":
-			m.fetching = true
-			return m, twitch.StartAuthenticationProcess()
+			m.serverStarting = true
+			ready := make(chan struct{}, 1)
+			cmd = tea.Batch(
+				twitch.StartLocalServer(ready, m.externalMsgs),
+				listenForExternalMsgs(m.externalMsgs),
+			)
 		case "c":
 			return ChangeView(m, ChannelInputState)
 		}
-	case types.AuthResultMsg:
-		m.fetching = false
-		m.error = msg.Error
-		return m, nil
+	case types.ServerStartedMsg:
+		m.serverStarting = false
+		m.serverStarted = true
+		cmd = tea.Batch(
+			twitch.PromptTwitchAuth(),
+			listenForExternalMsgs(m.externalMsgs),
+		)
+	case types.AuthOpenMsg:
+		m.authPromptOpening = true
+	case types.AuthOpenedMsg:
+		m.authPromptOpening = false
+		m.authPrompOpened = true
+	case types.TokenReceiveMsg:
+		m.tokenReceiving = true
+		m.authPrompOpened = false
+	case types.TokenReceivedMsg:
+		m.tokenReceiving = false
+		m.tokenReceived = true
 	}
-	return m, nil
+	if cmd == nil {
+		cmd = listenForExternalMsgs(m.externalMsgs)
+	}
+	return m, cmd
 }
 
 func (m AuthModel) View() string {
 	var b strings.Builder
-	if m.fetching {
-		fmt.Fprintf(&b, "Fetching token... %s", m.spinner.View())
-	} else {
-		fmt.Fprintln(&b, "Press 'f' to fetch token, 'c' to cancel.")
+	check := ""
+	fmt.Fprint(&b, "Press [f] to start auth, [c] to cancel\n")
+	if m.serverStarting {
+		fmt.Fprintln(&b, "Starting server...", m.spinner.View())
+	} else if m.serverStarted {
+		fmt.Fprintln(&b, "Starting server...", check)
 	}
-	if m.error != "" && !m.fetching {
-		fmt.Fprintln(&b, "Error:", m.error)
+	if m.authPromptOpening {
+		fmt.Fprintln(&b, "Opening Twitch authentication...", m.spinner.View())
+	} else if m.serverStarted {
+		fmt.Fprintln(&b, "Opening Twitch authentication...", check)
 	}
-	if m.error == "" && !m.fetching {
-		fmt.Fprintln(&b, "Authentication successful!")
+	if m.tokenReceiving {
+		fmt.Fprintln(&b, "Processing auth token...", m.spinner.View())
+	} else if m.tokenReceived {
+		fmt.Fprintln(&b, "Processing auth token...", check)
+		fmt.Fprintln(&b, "Authentication complete! Press [c] to return to channel selection")
 	}
 	return b.String()
 }
