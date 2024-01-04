@@ -15,7 +15,8 @@ type ChannelInputModel struct {
 }
 
 func InitialChannelInputModel() ChannelInputModel {
-	authRequired := utils.InitConfig()
+	utils.InitConfig()
+	authRequired := utils.IsAuthRequired()
 	ti := textinput.New()
 	ti.Placeholder = "a_seagull"
 	configChannel := viper.GetString("channel")
@@ -55,6 +56,7 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return ChangeView(m, ChatState)
 		}
 	}
+	m.authRequired = utils.IsAuthRequired()
 	m.textinput, cmd = m.textinput.Update(msg)
 	return m, cmd
 }
@@ -62,12 +64,12 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m ChannelInputModel) View() string {
 	var authMessage string
 	if m.authRequired {
-		authMessage = "Authentication required. Press [Ctrl+A] to start."
+		authMessage = "Authentication required. Press [Ctrl+a] to start."
 	}
 	return fmt.Sprintf(
 		"Enter channel name:\n%s\n%s\n%s",
 		m.textinput.View(),
-		"(Type exit or press Ctrl+c to quit. Ctrl+O for options)",
+		"(Type exit or press [Ctrl+c] to quit. [Ctrl+o] for options)",
 		authMessage,
 	)
 }

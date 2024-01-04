@@ -124,7 +124,7 @@ func (m AuthModel) View() string {
 	check := ""
 	fmt.Fprintf(
 		&b,
-		"Enter channel name:\n%s\n",
+		"Enter username:\n%s\n",
 		m.input.View(),
 	)
 	if isValidUsernameLength(m.input) {
