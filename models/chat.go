@@ -24,8 +24,9 @@ type ChatModel struct {
 	WsClient    *utils.WebSocketClient
 }
 
-func InitialChatModel() ChatModel {
-	vp := viewport.New(84, 24)
+func InitialChatModel(width int, height int) ChatModel {
+	vp := viewport.New(width-2, height-2)
+	log.Println("width: ", width, "height: ", height)
 	vp.SetContent("")
 	utils.InitConfig()
 	username := viper.GetString("username")
@@ -39,7 +40,7 @@ func InitialChatModel() ChatModel {
 	go utils.EstablishWSConnection(wsClient, channel, username, oauth, msgChan)
 	ti := textinput.New()
 	ti.CharLimit = 256
-	ti.Placeholder = "..."
+	ti.Placeholder = "Send a message"
 	ti.Focus()
 	return ChatModel{
 		input:     "",
@@ -62,6 +63,7 @@ func (m ChatModel) Init() tea.Cmd {
 }
 
 func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	log.Printf("Msg received in chat: %T", msg)
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

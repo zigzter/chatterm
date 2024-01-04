@@ -16,7 +16,7 @@ func main() {
 	}
 	defer f.Close()
 	m := models.InitialRootModel()
-	p := tea.NewProgram(m)
+	p := tea.NewProgram(m, tea.WithAltScreen())
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt)

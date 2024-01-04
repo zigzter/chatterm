@@ -24,6 +24,8 @@ type RootModel struct {
 	Config            ConfigModel
 	Auth              AuthModel
 	IsChatInitialized bool
+	Width             int
+	Height            int
 }
 
 func InitialRootModel() RootModel {
@@ -45,44 +47,43 @@ func (m RootModel) Init() tea.Cmd {
 
 func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.Width, m.Height = msg.Width, msg.Height
+		return m, nil
 	case ChangeStateMsg:
 		m.State = msg.NewState
 		// This is to handle pressing enter on a pre-filled ChannelInput value
 		// TODO: find a better way to do this
 		if m.State == ChatState && !m.IsChatInitialized {
-			m.Chat = InitialChatModel()
+			m.Chat = InitialChatModel(m.Width, m.Height)
 			chatCmd := m.Chat.Init()
 			m.IsChatInitialized = true
 			return m, chatCmd
 		}
 		return m, nil
 	}
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch m.State {
 	case ChannelInputState:
-		newModel, cmd := m.ChannelInput.Update(msg)
+		newModel, newCmd := m.ChannelInput.Update(msg)
 		m.ChannelInput = newModel.(ChannelInputModel)
-		return m, cmd
+		cmd = newCmd
 	case ChatState:
-		if !m.IsChatInitialized {
-			m.Chat = InitialChatModel()
-			initCmd := m.Chat.Init()
-			m.IsChatInitialized = true
-			return m, initCmd
-		}
-		newModel, cmd := m.Chat.Update(msg)
+		newModel, newCmd := m.Chat.Update(msg)
 		m.Chat = newModel.(ChatModel)
-		return m, cmd
+		cmd = newCmd
 	case ConfigState:
-		newModel, cmd := m.Config.Update(msg)
+		newModel, newCmd := m.Config.Update(msg)
 		m.Config = newModel.(ConfigModel)
-		return m, cmd
+		cmd = newCmd
 	case AuthState:
-		newModel, cmd := m.Auth.Update(msg)
+		newModel, newCmd := m.Auth.Update(msg)
 		m.Auth = newModel.(AuthModel)
-		return m, cmd
-	default:
-		return m, nil
+		cmd = newCmd
 	}
+	cmds = append(cmds, cmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m RootModel) View() string {
