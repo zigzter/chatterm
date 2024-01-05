@@ -3,38 +3,47 @@ package twitch
 import (
 	"bytes"
 	"encoding/json"
+	"io"
+	"log"
 	"net/http"
+	"strings"
 
 	"github.com/spf13/viper"
+	"github.com/zigzter/chatterm/types"
 )
 
-type TwitchCommand string
-
-const (
-	Ban   TwitchCommand = "ban"
-	Clear TwitchCommand = "clear"
-)
-
-func SendTwitchCommand(command TwitchCommand) error {
-	url := "https://api.twitch.tv/helix/"
+func SendTwitchCommand(command types.TwitchCommand, args string) error {
+	cmdDetails := RequestMap[command]
+	argParts := strings.SplitN(args, " ", 2)
+	channel := viper.GetString("channel")
+	username := viper.GetString("username")
+	rootUrl := "https://api.twitch.tv/helix"
+	url := rootUrl + cmdDetails.Endpoint + "?broadcaster_id=" + channel + "&moderator_id=" + username
 	token := viper.GetString("token")
-	clientId := viper.GetString("clientid")
-	requestBody, err := json.Marshal(map[string]TwitchCommand{"data": command})
+	requestBody, err := json.Marshal(map[string]map[string]string{
+		"data": {"user_id": argParts[0], "duration": argParts[1]},
+	})
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest(cmdDetails.Method, url, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Client-Id", clientId)
+	req.Header.Set("Client-Id", ClientId)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bodyString := string(bodyBytes)
+	log.Println(bodyString)
 	if err != nil {
 		return err
 	}

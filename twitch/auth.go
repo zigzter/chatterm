@@ -52,14 +52,14 @@ func PromptTwitchAuth() tea.Cmd {
 			"chat:edit",
 			"user:read:chat",
 			"channel:moderate",
+			"moderator:manage:banned_users",
 		}
-		clientId := "x6pl99d1tq9mqys6y2bmr59ahw9nik"
 		redirectUrl := serverAddr
 		scope := strings.Join(scopes, " ")
 		state := utils.GenerateRandomString(10)
 		url := fmt.Sprintf(
 			"https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=%s&redirect_uri=http://%s&scope=%s&state=%s",
-			clientId,
+			ClientId,
 			redirectUrl,
 			scope,
 			state,

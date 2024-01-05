@@ -3,11 +3,13 @@ package models
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/bubbletea"
 	"github.com/spf13/viper"
+	"github.com/zigzter/chatterm/twitch"
 	"github.com/zigzter/chatterm/types"
 	"github.com/zigzter/chatterm/utils"
 )
@@ -52,6 +54,28 @@ func InitialChatModel(width int, height int) ChatModel {
 	}
 }
 
+func processChatInput(input string) (isCommand bool, command string, args string) {
+	if strings.HasPrefix(input, "/") {
+		parts := strings.SplitN(input, " ", 2)
+		// The first part is the command
+		command = strings.TrimPrefix(parts[0], "/")
+		// The rest of the input (if any) is considered as arguments
+		if len(parts) > 1 {
+			args = parts[1]
+		}
+		return true, command, args
+	}
+	return false, "", input
+}
+
+func isValidCommand(command string) bool {
+	switch types.TwitchCommand(command) {
+	case types.Ban, types.Clear:
+		return true
+	}
+	return false
+}
+
 func listenToWebSocket(msgChan <-chan types.ChatMessageWrap) tea.Cmd {
 	return func() tea.Msg {
 		return <-msgChan
@@ -63,7 +87,6 @@ func (m ChatModel) Init() tea.Cmd {
 }
 
 func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	log.Printf("Msg received in chat: %T", msg)
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -71,9 +94,22 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		case tea.KeyEnter:
-			m.chatContent += fmt.Sprintf("You: %s\n", m.textinput.Value())
+			message := m.textinput.Value()
+			isCommand, command, args := processChatInput(message)
+			if isCommand {
+				if isValidCommand(command) {
+					err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
+					if err != nil {
+						log.Println(err)
+					}
+				} else {
+					m.chatContent += fmt.Sprintf("Invalid command: %s\n", command)
+				}
+			} else {
+				m.chatContent += fmt.Sprintf("You: %s\n", message)
+				m.WsClient.SendMessage([]byte("PRIVMSG #" + m.channel + " :" + message))
+			}
 			m.viewport.SetContent(m.chatContent)
-			m.WsClient.SendMessage([]byte("PRIVMSG #" + m.channel + " :" + m.textinput.Value()))
 			m.textinput.Reset()
 			return m, listenToWebSocket(m.msgChan)
 		}

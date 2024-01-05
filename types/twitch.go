@@ -15,3 +15,10 @@ type (
 	TokenReceivedMsg   struct{}
 	ProcessCompleteMsg struct{}
 )
+
+type TwitchCommand string
+
+const (
+	Ban   TwitchCommand = "ban"
+	Clear TwitchCommand = "clear"
+)

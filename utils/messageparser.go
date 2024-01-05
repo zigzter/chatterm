@@ -21,6 +21,8 @@ func MessageParser(input string) types.ChatMessage {
 			value := kv[1]
 
 			switch key {
+			case "user-id":
+				chatMessage.UserId = value
 			case "color":
 				chatMessage.Color = value
 			case "display-name":

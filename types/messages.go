@@ -12,6 +12,7 @@ type ChatMessage struct {
 	IsMod          bool
 	IsVIP          bool
 	Message        string
+	UserId         string
 }
 
 type SubMessage struct {
