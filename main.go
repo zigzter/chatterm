@@ -6,6 +6,8 @@ import (
 	"os/signal"
 
 	tea "github.com/charmbracelet/bubbletea"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/zigzter/chatterm/db"
 	"github.com/zigzter/chatterm/models"
 )
 
@@ -15,6 +17,10 @@ func main() {
 		log.Fatalf("err: %w", err)
 	}
 	defer f.Close()
+	sql := db.OpenDB()
+	defer sql.Close()
+	db.CreateTables(sql)
+
 	m := models.InitialRootModel()
 	p := tea.NewProgram(m, tea.WithAltScreen())
 

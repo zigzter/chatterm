@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/websocket"
+	"github.com/zigzter/chatterm/db"
 	"github.com/zigzter/chatterm/types"
 )
 
@@ -58,6 +59,9 @@ func EstablishWSConnection(client *WebSocketClient, channel string, username str
 			rawIrcMessage := strings.TrimSpace(string(message))
 			if msgRegex.MatchString(rawIrcMessage) {
 				chatMessage := MessageParser(rawIrcMessage)
+				// TODO: find a better place to map the id
+				sql := db.OpenDB()
+				db.InsertUserMap(sql, chatMessage.DisplayName, chatMessage.UserId)
 				msgChan <- types.ChatMessageWrap{ChatMsg: chatMessage}
 			} else if subRegex.MatchString(rawIrcMessage) {
 				subMessage := SubParser(rawIrcMessage)
