@@ -48,7 +48,7 @@ func QueryChatMessages(db *sql.DB, query string) {
 
 func GetUserId(db *sql.DB, username string) (string, error) {
 	var userId string
-	sqlStatement := "SELECT * from userid_table WHERE username = ? LIMIT 1"
+	sqlStatement := "SELECT * from userid_map WHERE username = ? LIMIT 1"
 	rows, err := db.Query(sqlStatement, username)
 	if err != nil {
 		log.Fatal("Cannot query username:", err)

@@ -7,21 +7,57 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
+	"github.com/zigzter/chatterm/db"
 	"github.com/zigzter/chatterm/types"
 )
 
+func FetchUser(username string) (types.UserData, error) {
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest(http.MethodGet, "https://api.twitch.tv/helix/users", nil)
+	query := req.URL.Query()
+	query.Add("login", username)
+	req.URL.RawQuery = query.Encode()
+	token := viper.GetString("token")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Client-Id", ClientId)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Error fetching user:", err)
+	}
+	defer resp.Body.Close()
+	var response types.FetchUserResp
+	jsonErr := json.NewDecoder(resp.Body).Decode(&response)
+	if jsonErr != nil {
+		log.Println("Json error:", jsonErr)
+	}
+	user := response.Data[0]
+	return user, nil
+}
+
 func SendTwitchCommand(command types.TwitchCommand, args string) error {
 	cmdDetails := RequestMap[command]
-	argParts := strings.SplitN(args, " ", 2)
+	argParts := strings.Split(args, " ")
+	targetUser := string(argParts[0])
+	duration := string(argParts[1])
 	channel := viper.GetString("channel")
 	username := viper.GetString("username")
+	sql := db.OpenDB()
+	userId, err := db.GetUserId(sql, targetUser)
+	if userId == "" {
+		user, err := FetchUser(username)
+		if err != nil {
+			return err
+		}
+		userId = user.ID
+	}
 	rootUrl := "https://api.twitch.tv/helix"
 	url := rootUrl + cmdDetails.Endpoint + "?broadcaster_id=" + channel + "&moderator_id=" + username
 	token := viper.GetString("token")
 	requestBody, err := json.Marshal(map[string]map[string]string{
-		"data": {"user_id": argParts[0], "duration": argParts[1]},
+		"data": {"user_id": userId, "duration": duration},
 	})
 	if err != nil {
 		return err
