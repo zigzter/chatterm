@@ -12,12 +12,13 @@ import (
 )
 
 var (
-	msgRegex  *regexp.Regexp = regexp.MustCompile(`\bPRIVMSG\b`)
-	subRegex  *regexp.Regexp = regexp.MustCompile(`\bUSERNOTICE\b`)
-	joinRegex *regexp.Regexp = regexp.MustCompile(`\bJOIN\b`)
-	partRegex *regexp.Regexp = regexp.MustCompile(`\bPART\b`)
-	pingRegex *regexp.Regexp = regexp.MustCompile(`\bPING\b`)
-	cmdRegex  *regexp.Regexp = regexp.MustCompile(`^!(\w+)\s?(\w+)?`)
+	msgRegex             *regexp.Regexp = regexp.MustCompile(`\bPRIVMSG\b`)
+	subRegex             *regexp.Regexp = regexp.MustCompile(`\bUSERNOTICE\b`)
+	globalUserStateRegex *regexp.Regexp = regexp.MustCompile(`\bGLOBALUSERSTATE\b`)
+	joinRegex            *regexp.Regexp = regexp.MustCompile(`\bJOIN\b`)
+	partRegex            *regexp.Regexp = regexp.MustCompile(`\bPART\b`)
+	pingRegex            *regexp.Regexp = regexp.MustCompile(`\bPING\b`)
+	cmdRegex             *regexp.Regexp = regexp.MustCompile(`^!(\w+)\s?(\w+)?`)
 )
 
 type WebSocketClient struct {
@@ -57,22 +58,23 @@ func EstablishWSConnection(client *WebSocketClient, channel string, username str
 		}
 		if messageType == websocket.TextMessage {
 			rawIrcMessage := strings.TrimSpace(string(message))
-			if msgRegex.MatchString(rawIrcMessage) {
+			switch {
+			case msgRegex.MatchString(rawIrcMessage):
 				chatMessage := MessageParser(rawIrcMessage)
 				// TODO: find a better place to map the id
 				sql := db.OpenDB()
 				db.InsertUserMap(sql, chatMessage.DisplayName, chatMessage.UserId)
 				msgChan <- types.ChatMessageWrap{ChatMsg: chatMessage}
-			} else if subRegex.MatchString(rawIrcMessage) {
+			case subRegex.MatchString(rawIrcMessage):
 				subMessage := SubParser(rawIrcMessage)
 				msgChan <- types.ChatMessageWrap{ChatMsg: subMessage}
-			} else if joinRegex.MatchString(rawIrcMessage) {
-				// TODO: handle joins?
-			} else if partRegex.MatchString(rawIrcMessage) {
-				// TODO: handle parts?
-			} else if pingRegex.MatchString(rawIrcMessage) {
+			case joinRegex.MatchString(rawIrcMessage):
+			case partRegex.MatchString(rawIrcMessage):
+			case pingRegex.MatchString(rawIrcMessage):
 				client.SendMessage([]byte("PONG :tmi.twitch.tv"))
-			} else {
+			case globalUserStateRegex.MatchString(rawIrcMessage):
+				StoreUserState(rawIrcMessage)
+			default:
 				log.Println(rawIrcMessage)
 			}
 		}

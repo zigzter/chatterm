@@ -43,18 +43,19 @@ func SendTwitchCommand(command types.TwitchCommand, args string) error {
 	targetUser := string(argParts[0])
 	duration := string(argParts[1])
 	channel := viper.GetString("channel")
-	username := viper.GetString("username")
+	moderatorId := viper.GetString("userId")
 	sql := db.OpenDB()
 	userId, err := db.GetUserId(sql, targetUser)
 	if userId == "" {
-		user, err := FetchUser(username)
+		user, err := FetchUser(targetUser)
 		if err != nil {
 			return err
 		}
 		userId = user.ID
+		db.InsertUserMap(sql, targetUser, userId)
 	}
 	rootUrl := "https://api.twitch.tv/helix"
-	url := rootUrl + cmdDetails.Endpoint + "?broadcaster_id=" + channel + "&moderator_id=" + username
+	url := rootUrl + cmdDetails.Endpoint + "?broadcaster_id=" + channel + "&moderator_id=" + moderatorId
 	token := viper.GetString("token")
 	requestBody, err := json.Marshal(map[string]map[string]string{
 		"data": {"user_id": userId, "duration": duration},

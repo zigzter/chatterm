@@ -10,8 +10,8 @@ import (
 func TestSubParser(t *testing.T) {
 	got := SubParser(RegResubMessage)
 	want := types.SubMessage{
-		DisplayName: "vexthorne",
-		Message:     "merry Christmas",
+		DisplayName: "gimli",
+		Message:     "Nobody tosses a dwarf",
 		Months:      "12",
 		Streak:      "1",
 	}

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"log"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -32,6 +33,28 @@ func InitConfig() {
 func SaveConfig(options map[string]interface{}) {
 	for key, value := range options {
 		viper.Set(key, value)
+	}
+	if err := viper.WriteConfig(); err != nil {
+		log.Println("Error saving config:", err)
+	}
+}
+
+func StoreUserState(input string) {
+	parts := strings.SplitN(input, ">", 2)
+	metadata := parts[1]
+	keyValPairs := strings.Split(metadata, ";")
+	for _, kvPair := range keyValPairs {
+		kv := strings.Split(kvPair, "=")
+		if len(kv) == 2 {
+			key := kv[0]
+			value := kv[1]
+			switch key {
+			case "user-id":
+				viper.Set("userId", value)
+			case "color":
+				viper.Set("color", value)
+			}
+		}
 	}
 	if err := viper.WriteConfig(); err != nil {
 		log.Println("Error saving config:", err)

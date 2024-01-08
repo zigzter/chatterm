@@ -8,7 +8,7 @@ import (
 
 func TestFormatSubMessage(t *testing.T) {
 	got := FormatSubMessage(ParsedSubMessage)
-	want := "vexthorne subscribed for 12 months: merry Christmas\n"
+	want := "gimli subscribed for 12 months: Nobody tosses a dwarf\n"
 
 	assert.Equal(t, got, want)
 }
