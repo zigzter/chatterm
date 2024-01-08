@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+// IsAuthRequired checks whether the token is present in the Viper config.
+// If it isn't, we need to authenticate.
 func IsAuthRequired() bool {
 	token := viper.GetString("token")
 	return token == ""
@@ -39,6 +41,8 @@ func SaveConfig(options map[string]interface{}) {
 	}
 }
 
+// StoreUserState processes the GLOBALUSERSTATE IRC message,
+// storing any relevant data to Viper
 func StoreUserState(input string) {
 	parts := strings.SplitN(input, ">", 2)
 	metadata := parts[1]
@@ -61,6 +65,8 @@ func StoreUserState(input string) {
 	}
 }
 
+// StoreRoomState processes the ROOMSTATE IRC message,
+// storing any relevant data to Viper
 func StoreRoomState(input string) {
 	parts := strings.SplitN(input, "\n", 2)
 	metadata := parts[1]

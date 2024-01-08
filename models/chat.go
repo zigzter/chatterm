@@ -54,6 +54,8 @@ func InitialChatModel(width int, height int) ChatModel {
 	}
 }
 
+// processChatInput takes in user input and determines whether the input is a command.
+// If it is a command, format the command and any potential arguments
 func processChatInput(input string) (isCommand bool, command string, args []string) {
 	if strings.HasPrefix(input, "/") {
 		parts := strings.SplitN(input, " ", 2)

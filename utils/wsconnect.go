@@ -26,6 +26,7 @@ type WebSocketClient struct {
 	Conn *websocket.Conn
 }
 
+// NewWebSocketClient creates and returns the websocket client
 func NewWebSocketClient() (*WebSocketClient, error) {
 	socketUrl := "ws://irc-ws.chat.twitch.tv:80"
 	conn, _, err := websocket.DefaultDialer.Dial(socketUrl, nil)
@@ -35,10 +36,13 @@ func NewWebSocketClient() (*WebSocketClient, error) {
 	return &WebSocketClient{Conn: conn}, nil
 }
 
+// SendMessage is a wrapper for sending IRC messages to the IRC server
 func (client *WebSocketClient) SendMessage(message []byte) error {
 	return client.Conn.WriteMessage(websocket.TextMessage, message)
 }
 
+// EstablishWSConnection sends the authentication information to Twitch,
+// then listens for and processes incoming IRC messages
 func EstablishWSConnection(client *WebSocketClient, channel string, username string, oath string, msgChan chan<- types.ChatMessageWrap) {
 	err1 := client.SendMessage([]byte("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands"))
 	if err1 != nil {

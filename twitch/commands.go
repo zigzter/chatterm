@@ -13,6 +13,7 @@ import (
 	"github.com/zigzter/chatterm/types"
 )
 
+// FetchUser retrieves the account data of the provided username from the Twitch API
 func FetchUser(username string) (types.UserData, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest(http.MethodGet, "https://api.twitch.tv/helix/users", nil)
@@ -36,6 +37,7 @@ func FetchUser(username string) (types.UserData, error) {
 	return user, nil
 }
 
+// SendTwitchCommand sends a request to the Twitch Helix API to perform a command
 func SendTwitchCommand(command types.TwitchCommand, args []string) error {
 	cmdDetails := RequestMap[command]
 	targetUser := string(args[0])
