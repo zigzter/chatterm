@@ -1,6 +1,8 @@
 # Chatterm
 
-Twitch chat in the terminal. Using Bubble Tea for the terminal UI, Gorilla WebSocket for the connection, SQLite for storage & Viper for the config.
+Twitch chat in the terminal, with moderator actions. Using Bubble Tea for the terminal UI, Gorilla WebSocket for the connection, SQLite for storage & Viper for the config.
+
+![Chat app preview image](./chat_preview.png)
 
 Current flow (requires Go if cloning):
 
@@ -11,11 +13,12 @@ Current flow (requires Go if cloning):
 
 Todo:
 
-- [x] Connect to Twitch channel via flags
+- [x] Connect to Twitch channel
 - [x] Add ability to send chats
 - [x] Store Oauth and username in a local config
 - [ ] Customize chat output (show/hide badges, colors for first chatters, etc)
 - [ ] Allow saving chat to file
 - [ ] Allow searching chat
+- [ ] Find a better method of rendering chats
 - [x] Perform moderator actions (currently only ban/timeout)
 
