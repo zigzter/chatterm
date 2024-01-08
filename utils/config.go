@@ -60,3 +60,23 @@ func StoreUserState(input string) {
 		log.Println("Error saving config:", err)
 	}
 }
+
+func StoreRoomState(input string) {
+	parts := strings.SplitN(input, "\n", 2)
+	metadata := parts[1]
+	keyValPairs := strings.Split(metadata, ";")
+	for _, kvPair := range keyValPairs {
+		kv := strings.Split(kvPair, "=")
+		if len(kv) == 2 {
+			key := kv[0]
+			value := kv[1]
+			switch key {
+			case "room-id":
+				viper.Set("channelid", value)
+			}
+		}
+	}
+	if err := viper.WriteConfig(); err != nil {
+		log.Println("Error saving config:", err)
+	}
+}

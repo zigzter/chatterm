@@ -54,18 +54,18 @@ func InitialChatModel(width int, height int) ChatModel {
 	}
 }
 
-func processChatInput(input string) (isCommand bool, command string, args string) {
+func processChatInput(input string) (isCommand bool, command string, args []string) {
 	if strings.HasPrefix(input, "/") {
 		parts := strings.SplitN(input, " ", 2)
 		// The first part is the command
 		command = strings.TrimPrefix(parts[0], "/")
 		// The rest of the input (if any) is considered as arguments
 		if len(parts) > 1 {
-			args = parts[1]
+			args = strings.Split(parts[1], " ")
 		}
 		return true, command, args
 	}
-	return false, "", input
+	return false, "", nil
 }
 
 func isValidCommand(command string) bool {
@@ -98,6 +98,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			isCommand, command, args := processChatInput(message)
 			if isCommand {
 				if isValidCommand(command) {
+					// TODO: Give user feedback of result
 					err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
 					if err != nil {
 						log.Println(err)

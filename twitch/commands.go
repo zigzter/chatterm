@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -37,13 +36,15 @@ func FetchUser(username string) (types.UserData, error) {
 	return user, nil
 }
 
-func SendTwitchCommand(command types.TwitchCommand, args string) error {
+func SendTwitchCommand(command types.TwitchCommand, args []string) error {
 	cmdDetails := RequestMap[command]
-	argParts := strings.Split(args, " ")
-	targetUser := string(argParts[0])
-	duration := string(argParts[1])
-	channel := viper.GetString("channel")
-	moderatorId := viper.GetString("userId")
+	targetUser := string(args[0])
+	duration := "0"
+	if len(args) > 1 {
+		duration = string(args[1])
+	}
+	channelid := viper.GetString("channelid")
+	moderatorId := viper.GetString("userid")
 	sql := db.OpenDB()
 	userId, err := db.GetUserId(sql, targetUser)
 	if userId == "" {
@@ -55,7 +56,7 @@ func SendTwitchCommand(command types.TwitchCommand, args string) error {
 		db.InsertUserMap(sql, targetUser, userId)
 	}
 	rootUrl := "https://api.twitch.tv/helix"
-	url := rootUrl + cmdDetails.Endpoint + "?broadcaster_id=" + channel + "&moderator_id=" + moderatorId
+	url := rootUrl + cmdDetails.Endpoint
 	token := viper.GetString("token")
 	requestBody, err := json.Marshal(map[string]map[string]string{
 		"data": {"user_id": userId, "duration": duration},
@@ -63,8 +64,12 @@ func SendTwitchCommand(command types.TwitchCommand, args string) error {
 	if err != nil {
 		return err
 	}
-
 	req, err := http.NewRequest(cmdDetails.Method, url, bytes.NewBuffer(requestBody))
+	query := req.URL.Query()
+	query.Add("broadcaster_id", channelid)
+	query.Add("moderator_id", moderatorId)
+	req.URL.RawQuery = query.Encode()
+	log.Println("sending to url:", req.URL)
 	if err != nil {
 		return err
 	}

@@ -15,6 +15,7 @@ var (
 	msgRegex             *regexp.Regexp = regexp.MustCompile(`\bPRIVMSG\b`)
 	subRegex             *regexp.Regexp = regexp.MustCompile(`\bUSERNOTICE\b`)
 	globalUserStateRegex *regexp.Regexp = regexp.MustCompile(`\bGLOBALUSERSTATE\b`)
+	roomStateRegex       *regexp.Regexp = regexp.MustCompile(`\bROOMSTATE\b`)
 	joinRegex            *regexp.Regexp = regexp.MustCompile(`\bJOIN\b`)
 	partRegex            *regexp.Regexp = regexp.MustCompile(`\bPART\b`)
 	pingRegex            *regexp.Regexp = regexp.MustCompile(`\bPING\b`)
@@ -74,6 +75,8 @@ func EstablishWSConnection(client *WebSocketClient, channel string, username str
 				client.SendMessage([]byte("PONG :tmi.twitch.tv"))
 			case globalUserStateRegex.MatchString(rawIrcMessage):
 				StoreUserState(rawIrcMessage)
+			case roomStateRegex.MatchString(rawIrcMessage):
+				StoreRoomState(rawIrcMessage)
 			default:
 				log.Println(rawIrcMessage)
 			}
