@@ -14,6 +14,22 @@ var RequestMap = map[types.TwitchCommand]CommandDetails{
 		Endpoint: "/moderation/bans",
 		Method:   "POST",
 	},
+	types.Unban: {
+		Endpoint: "/moderation/bans",
+		Method:   "DELETE",
+	},
+	types.Slow: {
+		Endpoint: "/chat/settings",
+		Method:   "PATCH",
+	},
+	types.SubOnly: {
+		Endpoint: "/chat/settings",
+		Method:   "PATCH",
+	},
+	types.Delete: {
+		Endpoint: "/moderation/chat",
+		Method:   "DELETE",
+	},
 	types.Clear: {
 		Endpoint: "/moderation/chat",
 		Method:   "DELETE",

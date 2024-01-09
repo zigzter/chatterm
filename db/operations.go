@@ -48,18 +48,16 @@ func QueryChatMessages(db *sql.DB, query string) {
 
 func GetUserId(db *sql.DB, username string) (string, error) {
 	var userId string
-	sqlStatement := "SELECT * from userid_map WHERE username = ? LIMIT 1"
-	rows, err := db.Query(sqlStatement, username)
+	sqlStatement := "SELECT user_id FROM userid_map WHERE username = ? LIMIT 1"
+	row := db.QueryRow(sqlStatement, username)
+
+	err := row.Scan(&userId)
 	if err != nil {
-		log.Fatal("Cannot query username:", err)
-	}
-	defer rows.Close()
-	if rows.Next() {
-		err := rows.Scan(&userId)
-		if err != nil {
-			return "", err
+		if err == sql.ErrNoRows {
+			return "", nil
 		}
-		return userId, nil
+		return "", err
 	}
-	return "", nil
+
+	return userId, nil
 }

@@ -3,6 +3,7 @@ package twitch
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -39,47 +40,10 @@ func FetchUser(username string) (types.UserData, error) {
 
 // SendTwitchCommand sends a request to the Twitch Helix API to perform a command
 func SendTwitchCommand(command types.TwitchCommand, args []string) error {
-	cmdDetails := RequestMap[command]
-	targetUser := string(args[0])
-	duration := "0"
-	if len(args) > 1 {
-		duration = string(args[1])
-	}
-	channelid := viper.GetString("channelid")
-	moderatorId := viper.GetString("userid")
-	sql := db.OpenDB()
-	userId, err := db.GetUserId(sql, targetUser)
-	if userId == "" {
-		user, err := FetchUser(targetUser)
-		if err != nil {
-			return err
-		}
-		userId = user.ID
-		db.InsertUserMap(sql, targetUser, userId)
-	}
-	rootUrl := "https://api.twitch.tv/helix"
-	url := rootUrl + cmdDetails.Endpoint
-	token := viper.GetString("token")
-	requestBody, err := json.Marshal(map[string]map[string]string{
-		"data": {"user_id": userId, "duration": duration},
-	})
+	req, err := ConstructRequest(command, args)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(cmdDetails.Method, url, bytes.NewBuffer(requestBody))
-	query := req.URL.Query()
-	query.Add("broadcaster_id", channelid)
-	query.Add("moderator_id", moderatorId)
-	req.URL.RawQuery = query.Encode()
-	log.Println("sending to url:", req.URL)
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Client-Id", ClientId)
-	req.Header.Set("Content-Type", "application/json")
-
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	bodyBytes, err := io.ReadAll(resp.Body)
@@ -94,4 +58,78 @@ func SendTwitchCommand(command types.TwitchCommand, args []string) error {
 	defer resp.Body.Close()
 
 	return nil
+}
+
+func ConstructRequest(command types.TwitchCommand, args []string) (*http.Request, error) {
+	cmdDetails := RequestMap[command]
+	rootUrl := "https://api.twitch.tv/helix"
+	url := rootUrl + cmdDetails.Endpoint
+	var req *http.Request
+	var err error
+	switch command {
+	case types.Ban:
+		targetUser := string(args[0])
+		duration := "0"
+		if len(args) > 1 {
+			duration = string(args[1])
+		}
+		sql := db.OpenDB()
+		userId, err := db.GetUserId(sql, targetUser)
+		if err != nil {
+			return nil, err
+		}
+		if userId == "" {
+			user, err := FetchUser(targetUser)
+			if err != nil {
+				return nil, err
+			}
+			userId = user.ID
+			db.InsertUserMap(sql, targetUser, userId)
+		}
+		requestBody, err := json.Marshal(map[string]map[string]string{
+			"data": {"user_id": userId, "duration": duration},
+		})
+		req, err = http.NewRequest(cmdDetails.Method, url, bytes.NewBuffer(requestBody))
+		req.Header.Set("Content-Type", "application/json")
+	case types.Unban:
+		targetUser := string(args[0])
+		sql := db.OpenDB()
+		userId, err := db.GetUserId(sql, targetUser)
+		if err != nil {
+			return nil, err
+		}
+		if userId == "" {
+			user, err := FetchUser(targetUser)
+			if err != nil {
+				return nil, err
+			}
+			userId = user.ID
+			db.InsertUserMap(sql, targetUser, userId)
+		}
+		req, err = http.NewRequest(cmdDetails.Method, url, nil)
+		q := req.URL.Query()
+		q.Add("user_id", userId)
+		req.URL.RawQuery = q.Encode()
+	case types.Clear:
+		req, err = http.NewRequest(cmdDetails.Method, url, nil)
+	case types.Delete:
+		if len(args) < 1 {
+			return nil, errors.New("Please provide the id of the message to delete")
+		}
+		req, err = http.NewRequest(cmdDetails.Method, url, nil)
+		req.URL.Query().Add("message_id", args[0])
+	default:
+		return nil, errors.New("Invalid command")
+	}
+	channelid := viper.GetString("channelid")
+	moderatorId := viper.GetString("userid")
+	token := viper.GetString("token")
+	query := req.URL.Query()
+	query.Add("broadcaster_id", channelid)
+	query.Add("moderator_id", moderatorId)
+	req.URL.RawQuery = query.Encode()
+	log.Println(req.URL.RawQuery)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Client-Id", ClientId)
+	return req, err
 }

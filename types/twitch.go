@@ -21,8 +21,12 @@ type (
 type TwitchCommand string
 
 const (
-	Ban   TwitchCommand = "ban"
-	Clear TwitchCommand = "clear"
+	Ban     TwitchCommand = "ban"
+	Unban   TwitchCommand = "unban"
+	Clear   TwitchCommand = "clear"
+	Delete  TwitchCommand = "delete"
+	Slow    TwitchCommand = "slow"
+	SubOnly TwitchCommand = "subonly"
 )
 
 type UserData struct {

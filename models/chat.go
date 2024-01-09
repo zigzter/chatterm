@@ -28,7 +28,6 @@ type ChatModel struct {
 
 func InitialChatModel(width int, height int) ChatModel {
 	vp := viewport.New(width-2, height-2)
-	log.Println("width: ", width, "height: ", height)
 	vp.SetContent("")
 	utils.InitConfig()
 	username := viper.GetString("username")
@@ -72,7 +71,7 @@ func processChatInput(input string) (isCommand bool, command string, args []stri
 
 func isValidCommand(command string) bool {
 	switch types.TwitchCommand(command) {
-	case types.Ban, types.Clear:
+	case types.Ban, types.Clear, types.Unban, types.Delete:
 		return true
 	}
 	return false
