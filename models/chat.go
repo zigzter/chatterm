@@ -99,10 +99,12 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			isCommand, command, args := processChatInput(message)
 			if isCommand {
 				if isValidCommand(command) {
-					// TODO: Give user feedback of result
+					// TODO: Give user detailed feedback of result
 					err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
 					if err != nil {
 						log.Println(err)
+					} else {
+						m.chatContent += fmt.Sprintln("Successfully ran", command)
 					}
 				} else {
 					m.chatContent += fmt.Sprintf("Invalid command: %s\n", command)

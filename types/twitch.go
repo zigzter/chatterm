@@ -2,12 +2,6 @@ package types
 
 import "time"
 
-type AuthResultMsg struct {
-	Success bool
-	Error   string
-	Token   string
-}
-
 type (
 	ServerStartMsg     struct{}
 	ServerStartedMsg   struct{}
