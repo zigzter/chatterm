@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/spf13/viper"
@@ -14,9 +15,27 @@ import (
 	"github.com/zigzter/chatterm/types"
 )
 
-// FetchUser retrieves the account data of the provided username from the Twitch API
+var (
+	clientInstance *http.Client
+	once           sync.Once
+)
+
+// httpClient creates a new http client, reusing an existing instance if it exists.
+func httpClient() *http.Client {
+	once.Do(func() {
+		clientInstance = &http.Client{
+			Transport: &http.Transport{
+				MaxIdleConnsPerHost: 20,
+			},
+			Timeout: 10 * time.Second,
+		}
+	})
+	return clientInstance
+}
+
+// FetchUser retrieves the account data of the provided username from the Twitch API.
 func FetchUser(username string) (types.UserData, error) {
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := httpClient()
 	req, err := http.NewRequest(http.MethodGet, "https://api.twitch.tv/helix/users", nil)
 	query := req.URL.Query()
 	query.Add("login", username)
@@ -44,7 +63,7 @@ func SendTwitchCommand(command types.TwitchCommand, args []string) error {
 	if err != nil {
 		return err
 	}
-	client := &http.Client{}
+	client := httpClient()
 	resp, err := client.Do(req)
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
