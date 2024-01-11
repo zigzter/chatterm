@@ -19,6 +19,7 @@ var (
 	joinRegex            *regexp.Regexp = regexp.MustCompile(`\bJOIN\b`)
 	partRegex            *regexp.Regexp = regexp.MustCompile(`\bPART\b`)
 	pingRegex            *regexp.Regexp = regexp.MustCompile(`\bPING\b`)
+	listUsersRegex       *regexp.Regexp = regexp.MustCompile(`\b353\b`)
 	cmdRegex             *regexp.Regexp = regexp.MustCompile(`^!(\w+)\s?(\w+)?`)
 )
 
@@ -43,7 +44,7 @@ func (client *WebSocketClient) SendMessage(message []byte) error {
 
 // EstablishWSConnection sends the authentication information to Twitch,
 // then listens for and processes incoming IRC messages
-func EstablishWSConnection(client *WebSocketClient, channel string, username string, oath string, msgChan chan<- types.ChatMessageWrap) {
+func EstablishWSConnection(client *WebSocketClient, channel string, username string, oath string, msgChan chan<- types.ParsedIRCMessage) {
 	err1 := client.SendMessage([]byte("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands"))
 	if err1 != nil {
 		log.Println("Error writing message:", err1)
@@ -69,12 +70,15 @@ func EstablishWSConnection(client *WebSocketClient, channel string, username str
 				// TODO: find a better place to map the id
 				sql := db.OpenDB()
 				db.InsertUserMap(sql, chatMessage.DisplayName, chatMessage.UserId)
-				msgChan <- types.ChatMessageWrap{ChatMsg: chatMessage}
+				msgChan <- types.ParsedIRCMessage{Msg: chatMessage}
 			case subRegex.MatchString(rawIrcMessage):
 				subMessage := SubParser(rawIrcMessage)
-				msgChan <- types.ChatMessageWrap{ChatMsg: subMessage}
+				msgChan <- types.ParsedIRCMessage{Msg: subMessage}
 			case joinRegex.MatchString(rawIrcMessage):
 			case partRegex.MatchString(rawIrcMessage):
+			case listUsersRegex.MatchString(rawIrcMessage):
+				userListMessage := UserListParser(rawIrcMessage)
+				msgChan <- types.ParsedIRCMessage{Msg: userListMessage}
 			case pingRegex.MatchString(rawIrcMessage):
 				client.SendMessage([]byte("PONG :tmi.twitch.tv"))
 			case globalUserStateRegex.MatchString(rawIrcMessage):

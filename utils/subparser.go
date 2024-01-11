@@ -16,7 +16,6 @@ func SubParser(input string) types.SubMessage {
 	}
 	subMessage := types.SubMessage{Message: message}
 	keyValPairs := strings.Split(metadata, ";")
-	// TODO: Fix crash on no-message subs and gifts
 	for _, kvPair := range keyValPairs {
 		kv := strings.Split(kvPair, "=")
 		if len(kv) == 2 {

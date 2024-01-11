@@ -15,6 +15,13 @@ var (
     :tmi.twitch.tv 372 frodo :You are in a maze of twisty passages, all alike.
     :tmi.twitch.tv 376 frodo :>
     @badge-info=;badges=twitch-recap-2023/1;color=#00F8FF;display-name=frodo;emote-sets=0,15067,19194,791602,1512303,300206297,300374282,301690833,301800850,302210471,303528731,340690726,367062000,369287198,410301729,459130136,472873131,477339272,485767368,488737509,537206155,564265402,592920959,610186276,1709863403,45f285b1-d1bf-40c5-9e81-eed39de4f4d1,7d0b9d11-479c-465a-b4fa-f732a5790599;user-id=20816785;user-type= :tmi.twitch.tv GLOBALUSERSTATE`
+	UsersListMessage = `
+    :frodo.tmi.twitch.tv 353 frodo = #gandalf :legolas gimli gandalf aragorn saruman sauron bilbo samwise merry pippin boromir elrond galadriel celeborn eowyn eomer theoden grima wormtongue faramir denethor radagast glorfindel arwen haldir tom bombadil goldberry treebeard barliman butterbur
+    :frodo.tmi.twitch.tv 353 frodo = #gandalf :rosie cotton lobelia gaffer gamgee belladonna took bullroarer took isildur elendil gil-galad beren luthien turgon finrod feanor melian thingol gollum smeagol bilbo
+    :frodo.tmi.twitch.tv 353 frodo = #gandalf :frodo
+    :frodo.tmi.twitch.tv 366 frodo #gandalf :End of /NAMES list
+
+    `
 	ParsedSubMessage = types.SubMessage{
 		DisplayName: "gimli",
 		Message:     "Nobody tosses a dwarf",

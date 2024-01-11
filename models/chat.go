@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/viper"
 	"github.com/zigzter/chatterm/twitch"
 	"github.com/zigzter/chatterm/types"
@@ -15,7 +16,7 @@ import (
 )
 
 type ChatModel struct {
-	msgChan     chan types.ChatMessageWrap
+	msgChan     chan types.ParsedIRCMessage
 	chatContent string
 	input       string
 	textinput   textinput.Model
@@ -24,6 +25,7 @@ type ChatModel struct {
 	height      int
 	channel     string
 	WsClient    *utils.WebSocketClient
+	ac          *utils.Trie
 }
 
 func InitialChatModel(width int, height int) ChatModel {
@@ -33,7 +35,7 @@ func InitialChatModel(width int, height int) ChatModel {
 	username := viper.GetString("username")
 	oauth := fmt.Sprintf("oauth:%s", viper.GetString("token"))
 	channel := viper.GetString("channel")
-	msgChan := make(chan types.ChatMessageWrap, 100)
+	msgChan := make(chan types.ParsedIRCMessage, 100)
 	wsClient, err := utils.NewWebSocketClient()
 	if err != nil {
 		log.Fatal("Failed to initialize socket client")
@@ -42,6 +44,8 @@ func InitialChatModel(width int, height int) ChatModel {
 	ti := textinput.New()
 	ti.CharLimit = 256
 	ti.Placeholder = "Send a message"
+	ti.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
+	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	ti.Focus()
 	return ChatModel{
 		input:     "",
@@ -50,6 +54,7 @@ func InitialChatModel(width int, height int) ChatModel {
 		msgChan:   msgChan,
 		WsClient:  wsClient,
 		channel:   channel,
+		ac:        &utils.Trie{Root: utils.NewTrieNode()},
 	}
 }
 
@@ -77,7 +82,7 @@ func isValidCommand(command string) bool {
 	return false
 }
 
-func listenToWebSocket(msgChan <-chan types.ChatMessageWrap) tea.Cmd {
+func listenToWebSocket(msgChan <-chan types.ParsedIRCMessage) tea.Cmd {
 	return func() tea.Msg {
 		return <-msgChan
 	}
@@ -94,6 +99,19 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
+		case tea.KeyTab:
+			input := m.textinput.Value()
+			command := strings.HasPrefix(input, "/ban ")
+			mention := strings.HasPrefix(input, "@")
+			suggestion := m.ac.UpdateSuggestion(m.textinput.Value())
+			var valReplacement string
+			if command {
+				valReplacement = "/ban " + suggestion
+			} else if mention {
+				valReplacement = "@" + suggestion
+			}
+			m.textinput.SetValue(valReplacement)
+			m.textinput.CursorEnd()
 		case tea.KeyEnter:
 			message := m.textinput.Value()
 			isCommand, command, args := processChatInput(message)
@@ -115,6 +133,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.viewport.SetContent(m.chatContent)
 			m.textinput.Reset()
+			m.ac.Prefix = ""
 			return m, listenToWebSocket(m.msgChan)
 		}
 	case tea.WindowSizeMsg:
@@ -122,13 +141,17 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.Width = m.width
 		m.viewport.Height = m.height
 		return m, listenToWebSocket(m.msgChan)
-	case types.ChatMessageWrap:
-		switch msg := msg.ChatMsg.(type) {
+	case types.ParsedIRCMessage:
+		switch msg := msg.Msg.(type) {
 		case types.ChatMessage:
 			m.chatContent += utils.FormatChatMessage(msg)
 			m.viewport.SetContent(m.chatContent)
+			m.ac.Insert(msg.DisplayName)
 		case types.SubMessage:
 			m.chatContent += utils.FormatSubMessage(msg)
+			m.viewport.SetContent(m.chatContent)
+		case types.UserListMessage:
+			m.ac.Populate(msg.Users)
 			m.viewport.SetContent(m.chatContent)
 		}
 		m.viewport.GotoBottom()

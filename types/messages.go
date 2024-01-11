@@ -1,7 +1,7 @@
 package types
 
 type Message interface {
-	GetMainText() string
+	Implements()
 }
 
 type ChatMessage struct {
@@ -22,14 +22,16 @@ type SubMessage struct {
 	Streak      string
 }
 
-func (cm ChatMessage) GetMainText() string {
-	return cm.Message
+type UserListMessage struct {
+	Users []string
 }
 
-func (sm SubMessage) GetMainText() string {
-	return sm.Message
-}
+func (cm ChatMessage) Implements() {}
 
-type ChatMessageWrap struct {
-	ChatMsg Message
+func (sm SubMessage) Implements() {}
+
+func (ul UserListMessage) Implements() {}
+
+type ParsedIRCMessage struct {
+	Msg Message
 }
