@@ -25,6 +25,7 @@ Twitch chat in the terminal, with moderator actions. Using Bubble Tea for the te
 - [x] Store Oauth and username in a local config
 - [ ] Customize chat output (show/hide badges, colors for first chatters, etc)
 - [ ] Query user info
+- [ ] Handle network drops
 - [ ] Allow saving chat to file
 - [ ] Allow searching chat
 - [ ] Find a better method of rendering chats

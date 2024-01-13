@@ -21,6 +21,7 @@ const (
 	Delete  TwitchCommand = "delete"
 	Slow    TwitchCommand = "slow"
 	SubOnly TwitchCommand = "subonly"
+	Info    TwitchCommand = "info"
 )
 
 type UserData struct {

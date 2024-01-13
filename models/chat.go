@@ -76,7 +76,7 @@ func processChatInput(input string) (isCommand bool, command string, args []stri
 
 func isValidCommand(command string) bool {
 	switch types.TwitchCommand(command) {
-	case types.Ban, types.Clear, types.Unban, types.Delete:
+	case types.Ban, types.Clear, types.Unban, types.Delete, types.Info:
 		return true
 	}
 	return false
@@ -118,7 +118,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if isCommand {
 				if isValidCommand(command) {
 					// TODO: Give user detailed feedback of result
-					err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
+					resp, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
 					if err != nil {
 						log.Println(err)
 					} else {
@@ -148,6 +148,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.SetContent(m.chatContent)
 			m.ac.Insert(msg.DisplayName)
 		case types.SubMessage:
+			// TODO: raids count as sub messages
 			m.chatContent += utils.FormatSubMessage(msg)
 			m.viewport.SetContent(m.chatContent)
 		case types.UserListMessage:

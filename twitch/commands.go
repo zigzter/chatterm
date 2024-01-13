@@ -33,35 +33,11 @@ func httpClient() *http.Client {
 	return clientInstance
 }
 
-// FetchUser retrieves the account data of the provided username from the Twitch API.
-func FetchUser(username string) (types.UserData, error) {
-	client := httpClient()
-	req, err := http.NewRequest(http.MethodGet, "https://api.twitch.tv/helix/users", nil)
-	query := req.URL.Query()
-	query.Add("login", username)
-	req.URL.RawQuery = query.Encode()
-	token := viper.GetString("token")
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Client-Id", ClientId)
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Println("Error fetching user:", err)
-	}
-	defer resp.Body.Close()
-	var response types.FetchUserResp
-	jsonErr := json.NewDecoder(resp.Body).Decode(&response)
-	if jsonErr != nil {
-		log.Println("Json error:", jsonErr)
-	}
-	user := response.Data[0]
-	return user, nil
-}
-
 // SendTwitchCommand sends a request to the Twitch Helix API to perform a command
-func SendTwitchCommand(command types.TwitchCommand, args []string) error {
+func SendTwitchCommand(command types.TwitchCommand, args []string) (interface{}, error) {
 	req, err := ConstructRequest(command, args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	client := httpClient()
 	resp, err := client.Do(req)
@@ -72,13 +48,22 @@ func SendTwitchCommand(command types.TwitchCommand, args []string) error {
 	bodyString := string(bodyBytes)
 	log.Println(bodyString)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
-
-	return nil
+	var result interface{}
+	switch command {
+	case types.Info:
+		var userData types.UserData
+		if err := json.Unmarshal(bodyBytes, &userData); err != nil {
+			return nil, err
+		}
+		result = userData
+	}
+	return result, nil
 }
 
+// ConstructRequest creates the specific request to be sent by SendTwitchCommand
 func ConstructRequest(command types.TwitchCommand, args []string) (*http.Request, error) {
 	cmdDetails := RequestMap[command]
 	rootUrl := "https://api.twitch.tv/helix"
@@ -86,6 +71,11 @@ func ConstructRequest(command types.TwitchCommand, args []string) (*http.Request
 	var req *http.Request
 	var err error
 	switch command {
+	case types.Info:
+		req, err = http.NewRequest(cmdDetails.Method, url, nil)
+		query := req.URL.Query()
+		query.Add("login", args[0])
+		req.URL.RawQuery = query.Encode()
 	case types.Ban:
 		targetUser := string(args[0])
 		duration := "0"
@@ -98,12 +88,14 @@ func ConstructRequest(command types.TwitchCommand, args []string) (*http.Request
 			return nil, err
 		}
 		if userId == "" {
-			user, err := FetchUser(targetUser)
+			data, err := SendTwitchCommand(types.Info, args)
 			if err != nil {
 				return nil, err
 			}
-			userId = user.ID
-			db.InsertUserMap(sql, targetUser, userId)
+			if user, ok := data.(types.UserData); ok {
+				userId = user.ID
+				db.InsertUserMap(sql, targetUser, userId)
+			}
 		}
 		requestBody, err := json.Marshal(map[string]map[string]string{
 			"data": {"user_id": userId, "duration": duration},
@@ -118,12 +110,14 @@ func ConstructRequest(command types.TwitchCommand, args []string) (*http.Request
 			return nil, err
 		}
 		if userId == "" {
-			user, err := FetchUser(targetUser)
+			data, err := SendTwitchCommand(types.Info, args)
 			if err != nil {
 				return nil, err
 			}
-			userId = user.ID
-			db.InsertUserMap(sql, targetUser, userId)
+			if user, ok := data.(types.UserData); ok {
+				userId = user.ID
+				db.InsertUserMap(sql, targetUser, userId)
+			}
 		}
 		req, err = http.NewRequest(cmdDetails.Method, url, nil)
 		q := req.URL.Query()

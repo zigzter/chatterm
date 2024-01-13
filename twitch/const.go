@@ -1,6 +1,8 @@
 package twitch
 
-import "github.com/zigzter/chatterm/types"
+import (
+	"github.com/zigzter/chatterm/types"
+)
 
 const ClientId = "x6pl99d1tq9mqys6y2bmr59ahw9nik"
 
@@ -33,5 +35,9 @@ var RequestMap = map[types.TwitchCommand]CommandDetails{
 	types.Clear: {
 		Endpoint: "/moderation/chat",
 		Method:   "DELETE",
+	},
+	types.Info: {
+		Endpoint: "/users",
+		Method:   "GET",
 	},
 }
