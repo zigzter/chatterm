@@ -58,6 +58,19 @@ func InitialChatModel(width int, height int) ChatModel {
 	}
 }
 
+var autocompletePrefixes = [4]string{"/ban ", "/unban ", "/info ", "@"}
+
+// shouldAutocomplete confirms whether autocomplete should trigger,
+// and returns the prefix for re-use when setting textinput value.
+func shouldAutocomplete(input string) (bool, string) {
+	for _, prefix := range autocompletePrefixes {
+		if strings.HasPrefix(input, prefix) {
+			return true, prefix
+		}
+	}
+	return false, ""
+}
+
 // processChatInput takes in user input and determines whether the input is a command.
 // If it is a command, format the command and any potential arguments
 func processChatInput(input string) (isCommand bool, command string, args []string) {
@@ -101,17 +114,11 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case tea.KeyTab:
 			input := m.textinput.Value()
-			command := strings.HasPrefix(input, "/ban ")
-			mention := strings.HasPrefix(input, "@")
-			suggestion := m.ac.UpdateSuggestion(m.textinput.Value())
-			var valReplacement string
-			if command {
-				valReplacement = "/ban " + suggestion
-			} else if mention {
-				valReplacement = "@" + suggestion
+			if valid, prefix := shouldAutocomplete(input); valid {
+				suggestion := m.ac.UpdateSuggestion(input[len(prefix):])
+				m.textinput.SetValue(prefix + suggestion)
+				m.textinput.CursorEnd()
 			}
-			m.textinput.SetValue(valReplacement)
-			m.textinput.CursorEnd()
 		case tea.KeyEnter:
 			message := m.textinput.Value()
 			isCommand, command, args := processChatInput(message)

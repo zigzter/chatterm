@@ -20,26 +20,13 @@ type Trie struct {
 	Prefix       string
 }
 
-func (t *Trie) autocomplete(input string) []string {
-	if strings.HasPrefix(input, "@") || strings.HasPrefix(input, "/ban ") {
-		searchTerm := input[1:]
-		if strings.HasPrefix(input, "/ban ") {
-			searchTerm = strings.TrimPrefix(input, "/ban ")
-		}
-		return t.Search(searchTerm)
-	}
-	return nil
-}
-
 func (t *Trie) UpdateSuggestion(input string) string {
-	if t.Prefix == "" {
-		t.Suggestions = nil
-		t.Prefix = input
-	}
-	if t.Suggestions == nil {
-		t.Suggestions = t.autocomplete(t.Prefix)
+	newPrefix := input
+	if !strings.HasPrefix(newPrefix, t.Prefix) || t.Suggestions == nil {
+		t.Prefix = newPrefix
+		t.Suggestions = t.Search(t.Prefix)
 		t.CurrentIndex = 0
-	} else {
+	} else if len(t.Suggestions) > 0 {
 		t.CurrentIndex = (t.CurrentIndex + 1) % len(t.Suggestions)
 	}
 	if len(t.Suggestions) > 0 {
