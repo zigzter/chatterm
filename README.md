@@ -1,6 +1,6 @@
 # Chatterm
 
-Twitch chat in the terminal, with moderator actions. Using Bubble Tea for the terminal UI, Gorilla WebSocket for the connection, SQLite for storage & Viper for the config.
+Twitch chat in the terminal, with moderator actions.
 
 ![Chat app preview image](./chat_preview.png)
 
@@ -8,15 +8,31 @@ Twitch chat in the terminal, with moderator actions. Using Bubble Tea for the te
 
 - View and send messages.
 - Built-in authentication via Twitch.
-- Ban & timeout users, and clear chat.
-- Autocomplete on `@` mentions and `/ban` command, triggered by pressing tab.
+- Ban & timeout users, clear chat, query user info
+- Username autocomplete on `@` mentions and `/` commands, triggered by pressing tab.
 
-### Current flow (requires Go if cloning):
+### Tech Used
+- Bubble Tea for the terminal UI
+- Gorilla WebSocket for the websocket connection
+- SQLite for storage
+- Viper for configuration
 
-1. Either clone and `go build .`, or download the binary under releases
-2. Run `./chatterm`, follow prompt to open auth and input username and start auth process.
-3. Once submitted, it should bring you back to the channel input view. Enter a channel to join and press enter.
-4. To timeout a user, type `/ban username timeInSeconds`. To ban the user, just leave out the time (`/ban username`).
+### Installation
+
+Cloning option (requires Go):
+1. `git clone https://github.com/zigzter/chatterm.git`
+2. `cd chatterm`
+3. `go build .`
+4. `./chatterm`
+
+Downloading binary option:
+Simply download the binary and run `./chatterm`
+
+### Supported Commands
+- Ban a user: `/ban username`
+- Timeout a user: `/ban username timeInSeconds`
+- Clear chat: `/clear`
+- Get a user's info: `/info username`
 
 ### Todo:
 
