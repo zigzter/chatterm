@@ -36,3 +36,12 @@ func FormatChatMessage(message types.ChatMessage) string {
 		resetCode,
 	)
 }
+
+func FormatSubMessage(message types.SubMessage) string {
+	return fmt.Sprintf(
+		"%s subscribed for %s months: %s\n",
+		message.DisplayName,
+		message.Months,
+		message.Message,
+	)
+}
