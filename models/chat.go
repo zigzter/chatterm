@@ -110,8 +110,11 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case tea.KeyCtrlC:
 			return m, tea.Quit
+		case tea.KeyEsc:
+			m.WsClient.Conn.Close()
+			return ChangeView(m, ChannelInputState)
 		case tea.KeyTab:
 			input := m.textinput.Value()
 			if valid, prefix := shouldAutocomplete(input); valid {

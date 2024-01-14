@@ -54,7 +54,7 @@ func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.State = msg.NewState
 		// This is to handle pressing enter on a pre-filled ChannelInput value
 		// TODO: find a better way to do this
-		if m.State == ChatState && !m.IsChatInitialized {
+		if m.State == ChatState {
 			m.Chat = InitialChatModel(m.Width, m.Height)
 			chatCmd := m.Chat.Init()
 			m.IsChatInitialized = true
