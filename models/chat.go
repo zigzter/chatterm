@@ -117,12 +117,27 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			isCommand, command, args := processChatInput(message)
 			if isCommand {
 				if isValidCommand(command) {
-					// TODO: Give user detailed feedback of result
-					resp, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
+					var feedback string
+					res, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
 					if err != nil {
-						log.Println(err)
+						feedback = err.Error()
 					} else {
-						m.chatContent += fmt.Sprintln("Successfully ran", command)
+						switch resp := res.(type) {
+						case *types.UserBanResp:
+							data := resp.Data[0]
+							if data.EndTime == nil {
+								feedback = fmt.Sprintf("You banned %s from the chat.\n", args[0])
+							} else {
+								feedback = fmt.Sprintf("You timed out %s until %s\n", args[0], data.EndTime)
+							}
+						case *types.UserData:
+							data := resp.Data[0]
+							feedback = fmt.Sprintf("User: %s. Account created: %s\n", data.DisplayName, data.CreatedAt)
+						case nil:
+							// TODO: find a better way to do this?
+							feedback = fmt.Sprintf("Successfully ran %s command\n", command)
+						}
+						m.chatContent += feedback
 					}
 				} else {
 					m.chatContent += fmt.Sprintf("Invalid command: %s\n", command)
