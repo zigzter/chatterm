@@ -5,12 +5,16 @@ import (
 )
 
 type TrieNode struct {
-	children map[rune]*TrieNode
-	isName   bool
+	children      map[rune]*TrieNode
+	isName        bool
+	originalNames []string // Store the case-sensitive names that end here
 }
 
 func NewTrieNode() *TrieNode {
-	return &TrieNode{children: make(map[rune]*TrieNode)}
+	return &TrieNode{
+		children:      make(map[rune]*TrieNode),
+		originalNames: make([]string, 0),
+	}
 }
 
 type Trie struct {
@@ -21,7 +25,7 @@ type Trie struct {
 }
 
 func (t *Trie) UpdateSuggestion(input string) string {
-	newPrefix := input
+	newPrefix := strings.ToLower(input)
 	if !strings.HasPrefix(newPrefix, t.Prefix) || t.Suggestions == nil {
 		t.Prefix = newPrefix
 		t.Suggestions = t.Search(t.Prefix)
@@ -49,7 +53,7 @@ func (t *Trie) Search(prefix string) []string {
 
 func (t *Trie) collectNames(node *TrieNode, prefix string, words []string) []string {
 	if node.isName {
-		words = append(words, prefix)
+		words = append(words, node.originalNames...)
 	}
 	for c, child := range node.children {
 		words = t.collectNames(child, prefix+string(c), words)
@@ -59,7 +63,7 @@ func (t *Trie) collectNames(node *TrieNode, prefix string, words []string) []str
 
 func (t *Trie) Insert(name string) {
 	current := t.Root
-	for _, c := range name {
+	for _, c := range strings.ToLower(name) {
 		node, ok := current.children[c]
 		if !ok {
 			node = NewTrieNode()
@@ -68,6 +72,7 @@ func (t *Trie) Insert(name string) {
 		current = node
 	}
 	current.isName = true
+	current.originalNames = append(current.originalNames, name)
 }
 
 func (t *Trie) Populate(names []string) {
