@@ -18,13 +18,15 @@ type (
 type TwitchCommand string
 
 const (
-	Ban     TwitchCommand = "ban"
-	Unban   TwitchCommand = "unban"
-	Clear   TwitchCommand = "clear"
-	Delete  TwitchCommand = "delete"
-	Slow    TwitchCommand = "slow"
-	SubOnly TwitchCommand = "subonly"
-	Info    TwitchCommand = "info"
+	Ban          TwitchCommand = "ban"
+	Unban        TwitchCommand = "unban"
+	Clear        TwitchCommand = "clear"
+	Delete       TwitchCommand = "delete"
+	Slow         TwitchCommand = "slow"
+	SubOnly      TwitchCommand = "subonly"
+	Info         TwitchCommand = "info"
+	Subscription TwitchCommand = "subscription"
+	Followers    TwitchCommand = "followers"
 )
 
 type TwitchAPIError struct {
@@ -49,6 +51,25 @@ type UserData struct {
 		OfflineImageURL string    `json:"offline_image_url"`
 		ViewCount       int       `json:"view_count"`
 		CreatedAt       time.Time `json:"created_at"`
+	} `json:"data"`
+}
+
+type SubscriptionResp struct {
+	Data []struct {
+		BroadcasterID    string `json:"broadcaster_id"`
+		BroadcasterName  string `json:"broadcaster_name"`
+		BroadcasterLogin string `json:"broadcaster_login"`
+		IsGift           bool   `json:"is_gift"`
+		GifterName       string `json:"gifter_name"` // Only exists if IsGift
+		Tier             string `json:"tier"`        // 1000, 2000, 3000
+	} `json:"data"`
+}
+
+type FollowersResp struct {
+	Data []struct {
+		ID          string `json:"user_id"`
+		Displayname string `json:"user_login"`
+		FollowedAt  string `json:"followed_at"`
 	} `json:"data"`
 }
 

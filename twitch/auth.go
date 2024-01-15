@@ -51,9 +51,11 @@ func PromptTwitchAuth() tea.Cmd {
 			"chat:read",
 			"chat:edit",
 			"user:read:chat",
+			"user:read:subscriptions",
 			"channel:moderate",
 			"moderator:manage:chat_messages",
 			"moderator:manage:banned_users",
+			"moderator:read:followers",
 		}
 		redirectUrl := serverAddr
 		scope := strings.Join(scopes, " ")

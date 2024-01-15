@@ -40,4 +40,12 @@ var RequestMap = map[types.TwitchCommand]CommandDetails{
 		Endpoint: "/users",
 		Method:   "GET",
 	},
+	types.Subscription: {
+		Endpoint: "/subscriptions/user",
+		Method:   "GET",
+	},
+	types.Followers: {
+		Endpoint: "/channels/followers",
+		Method:   "GET",
+	},
 }
