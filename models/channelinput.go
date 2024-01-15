@@ -21,21 +21,33 @@ var (
 )
 
 type ChannelInputModel struct {
-	textinput        textinput.Model
-	authRequired     bool
-	liveStreams      []types.LiveChannelsData
-	liveStreamsError string
+	textinput    textinput.Model
+	authRequired bool
+	liveStreams  []types.LiveChannelsData
+	error        string
 }
 
 func InitialChannelInputModel() ChannelInputModel {
 	utils.InitConfig()
 	authRequired := utils.IsAuthRequired()
-	// TODO: Get user ID before this. If a user auths but doesn't join a channel,
-	// their user id won't have been set yet to get their live follows
-	liveStreamsResp, err := twitch.SendLiveChannelsRequest()
-	var liveStreamsError string
+	var error string
+	userid := viper.GetString("userid")
+	if userid == "" {
+		username := viper.GetString("username")
+		userData, err := twitch.SendUserRequest(username)
+		if err != nil {
+			error = err.Error()
+		}
+		utils.SaveConfig(map[string]interface{}{
+			"userid": userData.Data[0].ID,
+		})
+	}
+	var liveStreams []types.LiveChannelsData
+	liveStreamsResp, err := twitch.SendLiveChannelsRequest(userid)
 	if err != nil {
-		liveStreamsError = err.Error()
+		error = err.Error()
+	} else {
+		liveStreams = liveStreamsResp.Data
 	}
 	ti := textinput.New()
 	ti.Placeholder = "a_seagull"
@@ -45,10 +57,10 @@ func InitialChannelInputModel() ChannelInputModel {
 	}
 	ti.Focus()
 	return ChannelInputModel{
-		textinput:        ti,
-		authRequired:     authRequired,
-		liveStreams:      liveStreamsResp.Data,
-		liveStreamsError: liveStreamsError,
+		textinput:    ti,
+		authRequired: authRequired,
+		liveStreams:  liveStreams,
+		error:        error,
 	}
 }
 
@@ -89,15 +101,15 @@ func (m ChannelInputModel) View() string {
 		b.WriteString("Authentication required. Press [Ctrl+a] to start.")
 	} else {
 		b.WriteString("Live Channels:\n")
-		if m.liveStreamsError != "" {
-			b.WriteString("Live channel retrieval error:" + m.liveStreamsError)
+		if m.error != "" {
+			b.WriteString("Live channel retrieval error:" + m.error)
 		}
 		for i, channel := range m.liveStreams {
 			if i > 10 {
 				break
 			}
 			b.WriteString(fmt.Sprintf(
-				"%s playing %s: %s (%d viewers)\n",
+				"%s playing %s: %s (%s viewers)\n",
 				channelNameStyle.Render(channel.UserName),
 				gameNameStyle.Render(channel.GameName),
 				titleStyle.Render(channel.Title),

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -51,15 +50,19 @@ func augmentRequest(req *http.Request) *http.Request {
 	return req
 }
 
-func fireRequest(req *http.Request) (string, []byte, error) {
+func fireRequest(req *http.Request) ([]byte, error) {
 	client := httpClient()
 	resp, err := client.Do(req)
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	defer resp.Body.Close()
-	return resp.Status, bodyBytes, nil
+	statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
+	if !statusOK {
+		return nil, errors.New(string(bodyBytes))
+	}
+	return bodyBytes, nil
 }
 
 // SendTwitchCommand sends a request to the Twitch Helix API to perform a command
@@ -70,7 +73,7 @@ func SendTwitchCommand(command types.TwitchCommand, args []string) (interface{},
 	case types.Unban:
 		return sendUnbanRequest(args)
 	case types.Info:
-		return sendInfoRequest(args)
+		return sendInfoRequest(args[0])
 	case types.Clear:
 		return sendClearRequest()
 	case types.Delete:
@@ -79,7 +82,7 @@ func SendTwitchCommand(command types.TwitchCommand, args []string) (interface{},
 	return nil, fmt.Errorf("Unknown command: %s", command)
 }
 
-func sendUserRequest(args []string) (*types.UserResp, error) {
+func SendUserRequest(username string) (*types.UserResp, error) {
 	cmdDetails := RequestMap[types.User]
 	url := rootUrl + cmdDetails.Endpoint
 	req, err := http.NewRequest(cmdDetails.Method, url, nil)
@@ -88,9 +91,9 @@ func sendUserRequest(args []string) (*types.UserResp, error) {
 	}
 	req = augmentRequest(req)
 	query := req.URL.Query()
-	query.Add("login", args[0])
+	query.Add("login", username)
 	req.URL.RawQuery = query.Encode()
-	_, bytes, err := fireRequest(req)
+	bytes, err := fireRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +113,7 @@ func sendFollowersRequest(args []string) (*types.FollowersResp, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, bytes, err := fireRequest(req)
+	bytes, err := fireRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -119,9 +122,9 @@ func sendFollowersRequest(args []string) (*types.FollowersResp, error) {
 	return &followerData, nil
 }
 
-func sendInfoRequest(args []string) (*types.UserInfo, error) {
+func sendInfoRequest(username string) (*types.UserInfo, error) {
 	userInfo := types.UserInfo{}
-	userResp, err := sendUserRequest(args)
+	userResp, err := SendUserRequest(username)
 	if err != nil {
 		return nil, err
 	}
@@ -136,19 +139,18 @@ func sendInfoRequest(args []string) (*types.UserInfo, error) {
 	return &userInfo, nil
 }
 
-func SendLiveChannelsRequest() (*types.LiveChannelsResp, error) {
+func SendLiveChannelsRequest(userID string) (*types.LiveChannelsResp, error) {
 	cmdDetails := RequestMap[types.LiveChannels]
 	url := rootUrl + cmdDetails.Endpoint
 	req, err := http.NewRequest(cmdDetails.Method, url, nil)
 	req = augmentRequest(req)
-	userId := viper.GetString("userid")
 	q := req.URL.Query()
-	q.Add("user_id", userId)
+	q.Add("user_id", userID)
 	req.URL.RawQuery = q.Encode()
 	if err != nil {
 		return nil, err
 	}
-	_, bytes, err := fireRequest(req)
+	bytes, err := fireRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +173,7 @@ func sendBanRequest(args []string) (*types.UserBanResp, error) {
 		return nil, err
 	}
 	if userId == "" {
-		user, err := sendUserRequest(args)
+		user, err := SendUserRequest(args[0])
 		if err != nil {
 			return nil, err
 		}
@@ -184,7 +186,7 @@ func sendBanRequest(args []string) (*types.UserBanResp, error) {
 	req, err := http.NewRequest(cmdDetails.Method, url, bytes.NewBuffer(requestBody))
 	req.Header.Set("Content-Type", "application/json")
 	req = augmentRequest(req)
-	_, bytes, err := fireRequest(req)
+	bytes, err := fireRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +206,7 @@ func sendUnbanRequest(args []string) (any, error) {
 		return nil, err
 	}
 	if userId == "" {
-		user, err := sendUserRequest(args)
+		user, err := SendUserRequest(args[0])
 		if err != nil {
 			return nil, err
 		}
@@ -216,16 +218,11 @@ func sendUnbanRequest(args []string) (any, error) {
 	q.Add("user_id", userId)
 	req.URL.RawQuery = q.Encode()
 	req = augmentRequest(req)
-	status, bytes, err := fireRequest(req)
+	bytes, err := fireRequest(req)
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasPrefix(status, "20") {
-		var apiErr types.TwitchAPIError
-		json.Unmarshal(bytes, &apiErr)
-		return nil, apiErr
-	}
-	return nil, nil
+	return bytes, nil
 }
 
 func sendClearRequest() (any, error) {
@@ -236,16 +233,11 @@ func sendClearRequest() (any, error) {
 		return nil, err
 	}
 	req = augmentRequest(req)
-	status, bytes, err := fireRequest(req)
+	bytes, err := fireRequest(req)
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasPrefix(status, "20") {
-		var apiErr types.TwitchAPIError
-		json.Unmarshal(bytes, &apiErr)
-		return nil, apiErr
-	}
-	return nil, nil
+	return bytes, nil
 }
 
 func sendDeleteRequest(args []string) (any, error) {
@@ -259,14 +251,9 @@ func sendDeleteRequest(args []string) (any, error) {
 	q.Add("message_id", args[0])
 	req.URL.RawQuery = q.Encode()
 	req = augmentRequest(req)
-	status, bytes, err := fireRequest(req)
+	bytes, err := fireRequest(req)
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasPrefix(status, "20") {
-		var apiErr types.TwitchAPIError
-		json.Unmarshal(bytes, &apiErr)
-		return nil, apiErr
-	}
-	return nil, nil
+	return bytes, nil
 }
