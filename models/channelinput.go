@@ -28,30 +28,9 @@ type ChannelInputModel struct {
 }
 
 func InitialChannelInputModel() ChannelInputModel {
+	model := ChannelInputModel{}
 	utils.InitConfig()
 	authRequired := utils.IsAuthRequired()
-	var error string
-	userID := viper.GetString("userid")
-	if userID == "" {
-		username := viper.GetString("username")
-		userData, err := twitch.SendUserRequest(username)
-		if err != nil {
-			error = err.Error()
-		} else {
-			userID = userData.Data[0].ID
-			utils.SaveConfig(map[string]interface{}{
-				"userid": userID,
-			})
-		}
-	}
-	var liveStreams []types.LiveChannelsData
-	liveStreamsResp, err := twitch.SendLiveChannelsRequest(userID)
-	if err != nil {
-		error = err.Error()
-	} else {
-		liveStreams = liveStreamsResp.Data
-		error = ""
-	}
 	ti := textinput.New()
 	ti.Placeholder = "a_seagull"
 	configChannel := viper.GetString("channel")
@@ -59,11 +38,32 @@ func InitialChannelInputModel() ChannelInputModel {
 		ti.SetValue(configChannel)
 	}
 	ti.Focus()
-	return ChannelInputModel{
-		textinput:    ti,
-		authRequired: authRequired,
-		liveStreams:  liveStreams,
-		error:        error,
+	model.textinput = ti
+	model.authRequired = authRequired
+	fetchLiveStreams(&model)
+	return model
+}
+
+func fetchLiveStreams(m *ChannelInputModel) {
+	userID := viper.GetString("userid")
+	if userID == "" {
+		username := viper.GetString("username")
+		userData, err := twitch.SendUserRequest(username)
+		if err != nil {
+			m.error = err.Error()
+		} else {
+			userID = userData.Data[0].ID
+			utils.SaveConfig(map[string]interface{}{
+				"userid": userID,
+			})
+		}
+	}
+	liveStreamsResp, err := twitch.SendLiveChannelsRequest(userID)
+	if err != nil {
+		m.error = err.Error()
+	} else {
+		m.liveStreams = liveStreamsResp.Data
+		m.error = ""
 	}
 }
 
@@ -82,25 +82,8 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// case tea.KeyCtrlO:
 			// 	return ChangeView(m, ConfigState)
 		case tea.KeyCtrlR:
-			userID := viper.GetString("userid")
-			if userID == "" {
-				username := viper.GetString("username")
-				userData, err := twitch.SendUserRequest(username)
-				if err != nil {
-					m.error = err.Error()
-				}
-				userID = userData.Data[0].ID
-				utils.SaveConfig(map[string]interface{}{
-					"userid": userID,
-				})
-			}
-			liveStreamsResp, err := twitch.SendLiveChannelsRequest(userID)
-			if err != nil {
-				m.error = err.Error()
-			} else {
-				m.liveStreams = liveStreamsResp.Data
-				m.error = ""
-			}
+			fetchLiveStreams(&m)
+			return m, nil
 		case tea.KeyCtrlA:
 			return ChangeView(m, AuthState)
 		case tea.KeyEnter:
@@ -121,7 +104,7 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m ChannelInputModel) View() string {
 	var b strings.Builder
 	if m.authRequired {
-		b.WriteString("Authentication required. Press [Ctrl+a] to start.")
+		b.WriteString("Authentication required. Press [Ctrl+a] to start.\n")
 	} else {
 		b.WriteString("Live Channels:\n")
 		if m.error != "" {
