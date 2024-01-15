@@ -43,6 +43,7 @@ func SaveConfig(options map[string]interface{}) {
 
 // StoreUserState processes the GLOBALUSERSTATE IRC message,
 // storing any relevant data to Viper
+// TODO: Change this to a user request at app start
 func StoreUserState(input string) {
 	parts := strings.SplitN(input, ">", 2)
 	metadata := parts[1]

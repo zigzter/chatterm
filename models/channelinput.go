@@ -30,6 +30,8 @@ type ChannelInputModel struct {
 func InitialChannelInputModel() ChannelInputModel {
 	utils.InitConfig()
 	authRequired := utils.IsAuthRequired()
+	// TODO: Get user ID before this. If a user auths but doesn't join a channel,
+	// their user id won't have been set yet to get their live follows
 	liveStreamsResp, err := twitch.SendLiveChannelsRequest()
 	var liveStreamsError string
 	if err != nil {
@@ -85,22 +87,26 @@ func (m ChannelInputModel) View() string {
 	var b strings.Builder
 	if m.authRequired {
 		b.WriteString("Authentication required. Press [Ctrl+a] to start.")
-	}
-	b.WriteString("Live Channels:\n")
-	for i, channel := range m.liveStreams {
-		if i > 10 {
-			break
+	} else {
+		b.WriteString("Live Channels:\n")
+		if m.liveStreamsError != "" {
+			b.WriteString("Live channel retrieval error:" + m.liveStreamsError)
 		}
-		b.WriteString(fmt.Sprintf(
-			"%s playing %s: %s (%d viewers)\n",
-			channelNameStyle.Render(channel.UserName),
-			gameNameStyle.Render(channel.GameName),
-			titleStyle.Render(channel.Title),
-			viewerCountStyle.Render(fmt.Sprintf("%d", channel.ViewerCount)),
-		))
+		for i, channel := range m.liveStreams {
+			if i > 10 {
+				break
+			}
+			b.WriteString(fmt.Sprintf(
+				"%s playing %s: %s (%d viewers)\n",
+				channelNameStyle.Render(channel.UserName),
+				gameNameStyle.Render(channel.GameName),
+				titleStyle.Render(channel.Title),
+				viewerCountStyle.Render(fmt.Sprintf("%d", channel.ViewerCount)),
+			))
+		}
+		b.WriteString("\nEnter channel name:\n")
+		b.WriteString(m.textinput.View())
 	}
-	b.WriteString("\nEnter channel name:\n")
-	b.WriteString(m.textinput.View())
 	b.WriteString("\n(Type exit or press [Ctrl+c] to quit. [Ctrl+o] for options)")
 	return b.String()
 }
