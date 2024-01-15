@@ -140,9 +140,16 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							} else {
 								feedback = fmt.Sprintf("You timed out %s until %s\n", args[0], data.EndTime)
 							}
-						case *types.UserData:
-							data := resp.Data[0]
-							feedback = fmt.Sprintf("User: %s. Account created: %s\n", data.DisplayName, data.CreatedAt)
+						case *types.UserInfo:
+							details := resp.Details
+							following := resp.Following
+							// TODO: Change "Following since" if not following
+							feedback = fmt.Sprintf(
+								"User: %s. Account created: %s. Following since %s\n",
+								details.DisplayName,
+								details.CreatedAt,
+								following.FollowedAt,
+							)
 						case nil:
 							// TODO: find a better way to do this?
 							feedback = fmt.Sprintf("Successfully ran %s command\n", command)

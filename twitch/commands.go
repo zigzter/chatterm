@@ -36,6 +36,8 @@ func httpClient() *http.Client {
 	return clientInstance
 }
 
+// augmentRequest adds the broadcaster_id and moderator_id query params,
+// as well as setting auth and client id headers.
 func augmentRequest(req *http.Request) *http.Request {
 	channelid := viper.GetString("channelid")
 	moderatorId := viper.GetString("userid")
@@ -77,8 +79,8 @@ func SendTwitchCommand(command types.TwitchCommand, args []string) (interface{},
 	return nil, fmt.Errorf("Unknown command: %s", command)
 }
 
-func sendInfoRequest(args []string) (*types.UserData, error) {
-	cmdDetails := RequestMap[types.Info]
+func sendUserRequest(args []string) (*types.UserResp, error) {
+	cmdDetails := RequestMap[types.User]
 	url := rootUrl + cmdDetails.Endpoint
 	req, err := http.NewRequest(cmdDetails.Method, url, nil)
 	if err != nil {
@@ -92,9 +94,46 @@ func sendInfoRequest(args []string) (*types.UserData, error) {
 	if err != nil {
 		return nil, err
 	}
-	var userData types.UserData
+	var userData types.UserResp
 	json.Unmarshal(bytes, &userData)
 	return &userData, nil
+}
+
+func sendFollowersRequest(args []string) (*types.FollowersResp, error) {
+	cmdDetails := RequestMap[types.Followers]
+	url := rootUrl + cmdDetails.Endpoint
+	req, err := http.NewRequest(cmdDetails.Method, url, nil)
+	req = augmentRequest(req)
+	q := req.URL.Query()
+	q.Add("user_id", args[0])
+	req.URL.RawQuery = q.Encode()
+	if err != nil {
+		return nil, err
+	}
+	_, bytes, err := fireRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	var followerData types.FollowersResp
+	json.Unmarshal(bytes, &followerData)
+	return &followerData, nil
+}
+
+func sendInfoRequest(args []string) (*types.UserInfo, error) {
+	userInfo := types.UserInfo{}
+	userResp, err := sendUserRequest(args)
+	if err != nil {
+		return nil, err
+	}
+	userInfo.Details = userResp.Data[0]
+	followerResp, err := sendFollowersRequest([]string{userInfo.Details.ID})
+	if err != nil {
+		return nil, err
+	}
+	if len(followerResp.Data) > 0 {
+		userInfo.Following = followerResp.Data[0]
+	}
+	return &userInfo, nil
 }
 
 func sendBanRequest(args []string) (*types.UserBanResp, error) {
@@ -111,7 +150,7 @@ func sendBanRequest(args []string) (*types.UserBanResp, error) {
 		return nil, err
 	}
 	if userId == "" {
-		user, err := sendInfoRequest(args)
+		user, err := sendUserRequest(args)
 		if err != nil {
 			return nil, err
 		}
@@ -144,7 +183,7 @@ func sendUnbanRequest(args []string) (any, error) {
 		return nil, err
 	}
 	if userId == "" {
-		user, err := sendInfoRequest(args)
+		user, err := sendUserRequest(args)
 		if err != nil {
 			return nil, err
 		}

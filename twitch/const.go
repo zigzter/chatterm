@@ -36,7 +36,7 @@ var RequestMap = map[types.TwitchCommand]CommandDetails{
 		Endpoint: "/moderation/chat",
 		Method:   "DELETE",
 	},
-	types.Info: {
+	types.User: {
 		Endpoint: "/users",
 		Method:   "GET",
 	},
