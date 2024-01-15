@@ -196,5 +196,10 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m ChatModel) View() string {
-	return fmt.Sprintf("%s\n%s", m.viewport.View(), m.textinput.View())
+	return fmt.Sprintf(
+		"%s\n%s\n%s",
+		m.viewport.View(),
+		m.textinput.View(),
+		helpStyle.Render("[Esc]: return to channel selection - [Ctrl+c]: quit - [tab]: autocomplete"),
+	)
 }

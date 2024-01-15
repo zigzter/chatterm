@@ -31,23 +31,26 @@ func InitialChannelInputModel() ChannelInputModel {
 	utils.InitConfig()
 	authRequired := utils.IsAuthRequired()
 	var error string
-	userid := viper.GetString("userid")
-	if userid == "" {
+	userID := viper.GetString("userid")
+	if userID == "" {
 		username := viper.GetString("username")
 		userData, err := twitch.SendUserRequest(username)
 		if err != nil {
 			error = err.Error()
+		} else {
+			userID = userData.Data[0].ID
+			utils.SaveConfig(map[string]interface{}{
+				"userid": userID,
+			})
 		}
-		utils.SaveConfig(map[string]interface{}{
-			"userid": userData.Data[0].ID,
-		})
 	}
 	var liveStreams []types.LiveChannelsData
-	liveStreamsResp, err := twitch.SendLiveChannelsRequest(userid)
+	liveStreamsResp, err := twitch.SendLiveChannelsRequest(userID)
 	if err != nil {
 		error = err.Error()
 	} else {
 		liveStreams = liveStreamsResp.Data
+		error = ""
 	}
 	ti := textinput.New()
 	ti.Placeholder = "a_seagull"
@@ -78,6 +81,26 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// TODO: re-enable config view
 			// case tea.KeyCtrlO:
 			// 	return ChangeView(m, ConfigState)
+		case tea.KeyCtrlR:
+			userID := viper.GetString("userid")
+			if userID == "" {
+				username := viper.GetString("username")
+				userData, err := twitch.SendUserRequest(username)
+				if err != nil {
+					m.error = err.Error()
+				}
+				userID = userData.Data[0].ID
+				utils.SaveConfig(map[string]interface{}{
+					"userid": userID,
+				})
+			}
+			liveStreamsResp, err := twitch.SendLiveChannelsRequest(userID)
+			if err != nil {
+				m.error = err.Error()
+			} else {
+				m.liveStreams = liveStreamsResp.Data
+				m.error = ""
+			}
 		case tea.KeyCtrlA:
 			return ChangeView(m, AuthState)
 		case tea.KeyEnter:
@@ -117,8 +140,8 @@ func (m ChannelInputModel) View() string {
 			))
 		}
 		b.WriteString("\nEnter channel name:\n")
-		b.WriteString(m.textinput.View())
+		b.WriteString(m.textinput.View() + "\n")
 	}
-	b.WriteString("\n(Type exit or press [Ctrl+c] to quit. [Ctrl+o] for options)")
+	b.WriteString(helpStyle.Render("[Ctrl+c]: quit - [Ctrl+r]: reload streams"))
 	return b.String()
 }
