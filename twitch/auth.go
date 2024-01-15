@@ -51,6 +51,7 @@ func PromptTwitchAuth() tea.Cmd {
 			"chat:read",
 			"chat:edit",
 			"user:read:chat",
+			"user:read:follows",
 			"user:read:subscriptions",
 			"channel:moderate",
 			"moderator:manage:chat_messages",

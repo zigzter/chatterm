@@ -48,4 +48,8 @@ var RequestMap = map[types.TwitchCommand]CommandDetails{
 		Endpoint: "/channels/followers",
 		Method:   "GET",
 	},
+	types.LiveChannels: {
+		Endpoint: "/streams/followed",
+		Method:   "GET",
+	},
 }

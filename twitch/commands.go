@@ -136,6 +136,27 @@ func sendInfoRequest(args []string) (*types.UserInfo, error) {
 	return &userInfo, nil
 }
 
+func SendLiveChannelsRequest() (*types.LiveChannelsResp, error) {
+	cmdDetails := RequestMap[types.LiveChannels]
+	url := rootUrl + cmdDetails.Endpoint
+	req, err := http.NewRequest(cmdDetails.Method, url, nil)
+	req = augmentRequest(req)
+	userId := viper.GetString("userid")
+	q := req.URL.Query()
+	q.Add("user_id", userId)
+	req.URL.RawQuery = q.Encode()
+	if err != nil {
+		return nil, err
+	}
+	_, bytes, err := fireRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	var liveChannels types.LiveChannelsResp
+	json.Unmarshal(bytes, &liveChannels)
+	return &liveChannels, nil
+}
+
 func sendBanRequest(args []string) (*types.UserBanResp, error) {
 	cmdDetails := RequestMap[types.Ban]
 	url := rootUrl + cmdDetails.Endpoint

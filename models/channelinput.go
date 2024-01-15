@@ -2,21 +2,39 @@ package models
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/viper"
+	"github.com/zigzter/chatterm/twitch"
+	"github.com/zigzter/chatterm/types"
 	"github.com/zigzter/chatterm/utils"
 )
 
+var (
+	titleStyle       = lipgloss.NewStyle()
+	channelNameStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("6"))
+	viewerCountStyle = lipgloss.NewStyle()
+	gameNameStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("12"))
+)
+
 type ChannelInputModel struct {
-	textinput    textinput.Model
-	authRequired bool
+	textinput        textinput.Model
+	authRequired     bool
+	liveStreams      []types.LiveChannelsData
+	liveStreamsError string
 }
 
 func InitialChannelInputModel() ChannelInputModel {
 	utils.InitConfig()
 	authRequired := utils.IsAuthRequired()
+	liveStreamsResp, err := twitch.SendLiveChannelsRequest()
+	var liveStreamsError string
+	if err != nil {
+		liveStreamsError = err.Error()
+	}
 	ti := textinput.New()
 	ti.Placeholder = "a_seagull"
 	configChannel := viper.GetString("channel")
@@ -25,8 +43,10 @@ func InitialChannelInputModel() ChannelInputModel {
 	}
 	ti.Focus()
 	return ChannelInputModel{
-		textinput:    ti,
-		authRequired: authRequired,
+		textinput:        ti,
+		authRequired:     authRequired,
+		liveStreams:      liveStreamsResp.Data,
+		liveStreamsError: liveStreamsError,
 	}
 }
 
@@ -62,14 +82,25 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m ChannelInputModel) View() string {
-	var authMessage string
+	var b strings.Builder
 	if m.authRequired {
-		authMessage = "Authentication required. Press [Ctrl+a] to start."
+		b.WriteString("Authentication required. Press [Ctrl+a] to start.")
 	}
-	return fmt.Sprintf(
-		"Enter channel name:\n%s\n%s\n%s",
-		m.textinput.View(),
-		"(Type exit or press [Ctrl+c] to quit. [Ctrl+o] for options)",
-		authMessage,
-	)
+	b.WriteString("Live Channels:\n")
+	for i, channel := range m.liveStreams {
+		if i > 10 {
+			break
+		}
+		b.WriteString(fmt.Sprintf(
+			"%s playing %s: %s (%d viewers)\n",
+			channelNameStyle.Render(channel.UserName),
+			gameNameStyle.Render(channel.GameName),
+			titleStyle.Render(channel.Title),
+			viewerCountStyle.Render(fmt.Sprintf("%d", channel.ViewerCount)),
+		))
+	}
+	b.WriteString("\nEnter channel name:\n")
+	b.WriteString(m.textinput.View())
+	b.WriteString("\n(Type exit or press [Ctrl+c] to quit. [Ctrl+o] for options)")
+	return b.String()
 }
