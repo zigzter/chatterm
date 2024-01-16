@@ -13,7 +13,7 @@ import (
 
 var (
 	msgRegex             *regexp.Regexp = regexp.MustCompile(`\bPRIVMSG\b`)
-	subRegex             *regexp.Regexp = regexp.MustCompile(`\bUSERNOTICE\b`)
+	usernoticeRegex      *regexp.Regexp = regexp.MustCompile(`\bUSERNOTICE\b`)
 	globalUserStateRegex *regexp.Regexp = regexp.MustCompile(`\bGLOBALUSERSTATE\b`)
 	roomStateRegex       *regexp.Regexp = regexp.MustCompile(`\bROOMSTATE\b`)
 	joinRegex            *regexp.Regexp = regexp.MustCompile(`\bJOIN\b`)
@@ -71,9 +71,10 @@ func EstablishWSConnection(client *WebSocketClient, channel string, username str
 				sql := db.OpenDB()
 				db.InsertUserMap(sql, chatMessage.DisplayName, chatMessage.UserId)
 				msgChan <- types.ParsedIRCMessage{Msg: chatMessage}
-			case subRegex.MatchString(rawIrcMessage):
-				subMessage := SubParser(rawIrcMessage)
-				msgChan <- types.ParsedIRCMessage{Msg: subMessage}
+			case usernoticeRegex.MatchString(rawIrcMessage):
+				log.Println(rawIrcMessage)
+				usernoticeMessage := UsernoticeParser(rawIrcMessage)
+				msgChan <- types.ParsedIRCMessage{Msg: usernoticeMessage}
 			case joinRegex.MatchString(rawIrcMessage):
 			case partRegex.MatchString(rawIrcMessage):
 			case listUsersRegex.MatchString(rawIrcMessage):
