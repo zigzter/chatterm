@@ -25,10 +25,12 @@ type ChannelInputModel struct {
 	authRequired bool
 	liveStreams  []types.LiveChannelsData
 	error        string
+	ac           *utils.Trie
 }
 
 func InitialChannelInputModel() ChannelInputModel {
 	model := ChannelInputModel{}
+	model.ac = &utils.Trie{Root: utils.NewTrieNode()}
 	utils.InitConfig()
 	authRequired := utils.IsAuthRequired()
 	ti := textinput.New()
@@ -63,6 +65,11 @@ func fetchLiveStreams(m *ChannelInputModel) {
 		m.error = err.Error()
 	} else {
 		m.liveStreams = liveStreamsResp.Data
+		var streamNames []string
+		for _, stream := range liveStreamsResp.Data {
+			streamNames = append(streamNames, stream.UserName)
+		}
+		m.ac.Populate(streamNames)
 		m.error = ""
 	}
 }
@@ -86,6 +93,11 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case tea.KeyCtrlA:
 			return ChangeView(m, AuthState)
+		case tea.KeyTab:
+			input := m.textinput.Value()
+			suggestion := m.ac.UpdateSuggestion(input)
+			m.textinput.SetValue(suggestion)
+			m.textinput.CursorEnd()
 		case tea.KeyEnter:
 			if m.textinput.Value() == "exit" {
 				return m, tea.Quit
@@ -125,6 +137,6 @@ func (m ChannelInputModel) View() string {
 		b.WriteString("\nEnter channel name:\n")
 		b.WriteString(m.textinput.View() + "\n")
 	}
-	b.WriteString(helpStyle.Render("[Ctrl+c]: quit - [Ctrl+r]: reload streams"))
+	b.WriteString(helpStyle.Render("[Ctrl+c]: quit - [Ctrl+r]: reload streams - [Ctrl+u]: reset channel input"))
 	return b.String()
 }
