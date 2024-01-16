@@ -27,17 +27,20 @@ func UsernoticeParser(input string) types.Message {
 	// This might be hacky. Dealing with the hyphenated keys of the IRC message tags
 	jsonBytes, err := json.Marshal(tagMap)
 	if err != nil {
+		// TODO: handle json error
 	}
 	var newMap types.MessageKVMap
 	json.Unmarshal(jsonBytes, &newMap)
+	newMap.Timestamp = ParseTimestamp(tagMap["tmi-sent-ts"])
 	switch tagMap["msg-id"] {
 	case "announcement":
 		return AnnouncementParser(newMap)
 	case "sub":
-		return GiftSubParser(newMap)
+		return SubParser(newMap)
 	case "resub":
 		return SubParser(newMap)
 	case "subgift":
+		return GiftSubParser(newMap)
 	case "raid":
 		return RaidParser(newMap)
 	}
@@ -48,6 +51,7 @@ func RaidParser(input types.MessageKVMap) types.RaidMessage {
 	return types.RaidMessage{
 		DisplayName: input.DisplayName,
 		ViewerCount: input.ViewerCount,
+		Timestamp:   input.Timestamp,
 	}
 }
 
@@ -55,12 +59,12 @@ func AnnouncementParser(input types.MessageKVMap) types.AnnouncementMessage {
 	return types.AnnouncementMessage{
 		DisplayName: input.DisplayName,
 		Message:     input.Message,
+		Timestamp:   input.Timestamp,
 	}
 }
 
 func GiftSubParser(input types.MessageKVMap) types.SubGiftMessage {
-	var subGiftMessage types.SubGiftMessage
-	return subGiftMessage
+	return types.SubGiftMessage{}
 }
 
 func SubParser(input types.MessageKVMap) types.SubMessage {
@@ -69,5 +73,6 @@ func SubParser(input types.MessageKVMap) types.SubMessage {
 		DisplayName: input.DisplayName,
 		Months:      input.CumulativeMonths,
 		Streak:      input.StreakMonths,
+		Timestamp:   input.Timestamp,
 	}
 }

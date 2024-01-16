@@ -17,7 +17,7 @@ type MessageKVMap struct {
 	ShareStreak      string `json:"msg-param-should-share-streak"` // Whehter the user wants their streak shared
 	StreakMonths     string `json:"msg-param-streak-months"`
 	SystemMsg        string `json:"system-msg"`  // Message shown to Twitch chat
-	Timestamp        string `json:"tmi-sent-ts"` // Unix timestamp
+	Timestamp        string `json:"tmi-sent-ts"` // Formatted timestamp
 	ViewerCount      string `json:"msg-param-viewerCount"`
 }
 
@@ -41,21 +41,25 @@ type SubMessage struct {
 	Message     string
 	Months      string
 	Streak      string
+	Timestamp   string
 }
 
 type SubGiftMessage struct {
 	GiverName    string
 	ReceiverName string
+	Timestamp    string
 }
 
 type RaidMessage struct {
 	DisplayName string
 	ViewerCount string
+	Timestamp   string
 }
 
 type AnnouncementMessage struct {
 	DisplayName string
 	Message     string
+	Timestamp   string
 }
 
 type UserListMessage struct {

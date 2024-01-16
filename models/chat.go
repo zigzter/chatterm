@@ -180,8 +180,16 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.SetContent(m.chatContent)
 			m.ac.Insert(msg.DisplayName)
 		case types.SubMessage:
-			// TODO: raids count as sub messages
 			m.chatContent += utils.FormatSubMessage(msg)
+			m.viewport.SetContent(m.chatContent)
+		case types.SubGiftMessage:
+			m.chatContent += utils.FormatGiftSubMessage(msg)
+			m.viewport.SetContent(m.chatContent)
+		case types.RaidMessage:
+			m.chatContent += utils.FormatRaidMessage(msg)
+			m.viewport.SetContent(m.chatContent)
+		case types.AnnouncementMessage:
+			m.chatContent += utils.FormatAnnouncementMessage(msg)
 			m.viewport.SetContent(m.chatContent)
 		case types.UserListMessage:
 			m.ac.Populate(msg.Users)

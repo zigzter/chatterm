@@ -38,10 +38,44 @@ func FormatChatMessage(message types.ChatMessage) string {
 }
 
 func FormatSubMessage(message types.SubMessage) string {
+	var fullMessage string
+	if message.Message != "" {
+		fullMessage = ": " + message.Message
+	} else {
+		fullMessage = "!"
+	}
 	return fmt.Sprintf(
-		"%s subscribed for %s months: %s\n",
+		"[%s]%s subscribed for %s months%s\n",
+		message.Timestamp,
 		message.DisplayName,
 		message.Months,
+		fullMessage,
+	)
+}
+
+func FormatAnnouncementMessage(message types.AnnouncementMessage) string {
+	return fmt.Sprintf(
+		"[%s][Announcement]%s: %s",
+		message.Timestamp,
+		message.DisplayName,
 		message.Message,
+	)
+}
+
+func FormatRaidMessage(message types.RaidMessage) string {
+	return fmt.Sprintf(
+		"[%s]%s raided the channel with %s viewers!\n",
+		message.Timestamp,
+		message.DisplayName,
+		message.ViewerCount,
+	)
+}
+
+func FormatGiftSubMessage(message types.SubGiftMessage) string {
+	return fmt.Sprintf(
+		"[%s]%s gifted a subscription to %s\n",
+		message.Timestamp,
+		message.GiverName,
+		message.ReceiverName,
 	)
 }

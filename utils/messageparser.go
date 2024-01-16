@@ -1,9 +1,7 @@
 package utils
 
 import (
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/zigzter/chatterm/types"
 )
@@ -34,21 +32,7 @@ func MessageParser(input string) types.ChatMessage {
 			case "vip":
 				chatMessage.IsVIP = value == "1"
 			case "tmi-sent-ts":
-				unixTime, err := strconv.ParseInt(value, 10, 64)
-				if err != nil {
-					chatMessage.Timestamp = "00:00"
-					return chatMessage
-				}
-				timeObj := time.Unix(unixTime/1000, 0)
-				// TODO: Custom timezone
-				location, err := time.LoadLocation("America/Los_Angeles")
-				if err != nil {
-					chatMessage.Timestamp = "00:00"
-					return chatMessage
-				}
-				localTime := timeObj.In(location)
-				formattedTime := localTime.Format("15:04")
-				chatMessage.Timestamp = formattedTime
+				chatMessage.Timestamp = ParseTimestamp(value)
 			}
 		}
 	}
