@@ -4,6 +4,8 @@ Twitch chat in the terminal, with moderator actions.
 
 ![Chat app preview image](./chat_preview.png)
 
+![Chat app channel input image](./channel_input.png)
+
 ### Features
 
 - View and send messages.
