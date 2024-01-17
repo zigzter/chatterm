@@ -3,14 +3,23 @@ package utils
 import (
 	"fmt"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/zigzter/chatterm/types"
 )
 
+func usernameColorizer(color string) lipgloss.Style {
+	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
+}
+
+func firstMessageColorizer() lipgloss.Style {
+	return lipgloss.NewStyle().Background(lipgloss.Color("#fe640b"))
+}
+
 func FormatChatMessage(message types.ChatMessage) string {
 	icon := ""
-	bgColor := ""
+	msg := message.Message
 	if message.IsFirstMessage {
-		bgColor = "\033[41m"
+		msg = firstMessageColorizer().Render(msg)
 	}
 	modIcon := "\033[32m󰓥"
 	vipIcon := "\033[35m󰮊"
@@ -19,21 +28,12 @@ func FormatChatMessage(message types.ChatMessage) string {
 	} else if message.IsVIP {
 		icon = vipIcon
 	}
-
-	color := ParseHexColor(message.Color)
-	resetCode := "\033[0m"
-	defaultTextColor := "\033[39m"
 	return fmt.Sprintf(
-		"[%s]%s%s\033[38;2;%d;%d;%dm%s%s%s: %s%s\n",
+		"[%s]%s%s: %s\n",
 		message.Timestamp,
-		bgColor,
 		icon,
-		color.R, color.G, color.B,
-		message.DisplayName,
-		defaultTextColor,
-		resetCode,
-		message.Message,
-		resetCode,
+		usernameColorizer(message.Color).Render(message.DisplayName),
+		msg,
 	)
 }
 
@@ -77,5 +77,14 @@ func FormatGiftSubMessage(message types.SubGiftMessage) string {
 		message.Timestamp,
 		message.GiverName,
 		message.ReceiverName,
+	)
+}
+
+func FormatMysteryGiftSubMessage(message types.MysterySubGiftMessage) string {
+	return fmt.Sprintf(
+		"[%s]%s is giving %s subs to the channel!\n",
+		message.Timestamp,
+		message.GiverName,
+		message.GiftAmount,
 	)
 }

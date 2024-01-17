@@ -41,6 +41,8 @@ func UsernoticeParser(input string) types.Message {
 		return SubParser(newMap)
 	case "subgift":
 		return GiftSubParser(newMap)
+	case "submysterygift": // Gifting n subs to the channel
+		return MysteryGiftSubParser(newMap)
 	case "raid":
 		return RaidParser(newMap)
 	}
@@ -64,7 +66,19 @@ func AnnouncementParser(input types.MessageKVMap) types.AnnouncementMessage {
 }
 
 func GiftSubParser(input types.MessageKVMap) types.SubGiftMessage {
-	return types.SubGiftMessage{}
+	return types.SubGiftMessage{
+		GiverName:    input.DisplayName,
+		ReceiverName: input.ReceiverName,
+		Timestamp:    input.Timestamp,
+	}
+}
+
+func MysteryGiftSubParser(input types.MessageKVMap) types.MysterySubGiftMessage {
+	return types.MysterySubGiftMessage{
+		GiverName:  input.DisplayName,
+		GiftAmount: input.GiftAmount,
+		Timestamp:  input.Timestamp,
+	}
 }
 
 func SubParser(input types.MessageKVMap) types.SubMessage {

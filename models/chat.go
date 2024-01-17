@@ -182,6 +182,8 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.chatContent += utils.FormatSubMessage(msg)
 		case types.SubGiftMessage:
 			m.chatContent += utils.FormatGiftSubMessage(msg)
+		case types.MysterySubGiftMessage:
+			m.chatContent += utils.FormatMysteryGiftSubMessage(msg)
 		case types.RaidMessage:
 			m.chatContent += utils.FormatRaidMessage(msg)
 		case types.AnnouncementMessage:

@@ -19,6 +19,8 @@ type MessageKVMap struct {
 	SystemMsg        string `json:"system-msg"`  // Message shown to Twitch chat
 	Timestamp        string `json:"tmi-sent-ts"` // Formatted timestamp
 	ViewerCount      string `json:"msg-param-viewerCount"`
+	ReceiverName     string `json:"msg-param-recipient-display-name"`
+	GiftAmount       string `json:"msg-param-mass-gift-count"`
 }
 
 type Message interface {
@@ -50,6 +52,12 @@ type SubGiftMessage struct {
 	Timestamp    string
 }
 
+type MysterySubGiftMessage struct {
+	GiverName  string
+	GiftAmount string
+	Timestamp  string
+}
+
 type RaidMessage struct {
 	DisplayName string
 	ViewerCount string
@@ -71,6 +79,8 @@ func (cm ChatMessage) Implements() {}
 func (sm SubMessage) Implements() {}
 
 func (sm SubGiftMessage) Implements() {}
+
+func (mg MysterySubGiftMessage) Implements() {}
 
 func (rm RaidMessage) Implements() {}
 
