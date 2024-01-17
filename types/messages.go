@@ -40,6 +40,7 @@ type ChatMessage struct {
 
 type SubMessage struct {
 	DisplayName string
+	Color       string
 	Message     string
 	Months      string
 	Streak      string
@@ -48,24 +49,28 @@ type SubMessage struct {
 
 type SubGiftMessage struct {
 	GiverName    string
+	Color        string
 	ReceiverName string
 	Timestamp    string
 }
 
 type MysterySubGiftMessage struct {
 	GiverName  string
+	Color      string
 	GiftAmount string
 	Timestamp  string
 }
 
 type RaidMessage struct {
 	DisplayName string
+	Color       string
 	ViewerCount string
 	Timestamp   string
 }
 
 type AnnouncementMessage struct {
 	DisplayName string
+	Color       string
 	Message     string
 	Timestamp   string
 }

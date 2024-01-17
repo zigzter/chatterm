@@ -54,6 +54,7 @@ func RaidParser(input types.MessageKVMap) types.RaidMessage {
 		DisplayName: input.DisplayName,
 		ViewerCount: input.ViewerCount,
 		Timestamp:   input.Timestamp,
+		Color:       input.Color,
 	}
 }
 
@@ -62,6 +63,7 @@ func AnnouncementParser(input types.MessageKVMap) types.AnnouncementMessage {
 		DisplayName: input.DisplayName,
 		Message:     input.Message,
 		Timestamp:   input.Timestamp,
+		Color:       input.Color,
 	}
 }
 
@@ -70,6 +72,7 @@ func GiftSubParser(input types.MessageKVMap) types.SubGiftMessage {
 		GiverName:    input.DisplayName,
 		ReceiverName: input.ReceiverName,
 		Timestamp:    input.Timestamp,
+		Color:        input.Color,
 	}
 }
 
@@ -78,6 +81,7 @@ func MysteryGiftSubParser(input types.MessageKVMap) types.MysterySubGiftMessage 
 		GiverName:  input.DisplayName,
 		GiftAmount: input.GiftAmount,
 		Timestamp:  input.Timestamp,
+		Color:      input.Color,
 	}
 }
 
@@ -88,5 +92,6 @@ func SubParser(input types.MessageKVMap) types.SubMessage {
 		Months:      input.CumulativeMonths,
 		Streak:      input.StreakMonths,
 		Timestamp:   input.Timestamp,
+		Color:       input.Color,
 	}
 }
