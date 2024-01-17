@@ -30,7 +30,7 @@ type ChatModel struct {
 }
 
 func InitialChatModel(width int, height int) ChatModel {
-	vp := viewport.New(width, height)
+	vp := viewport.New(width, height-3)
 	vp.SetContent("")
 	utils.InitConfig()
 	username := viper.GetString("username")
@@ -173,7 +173,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		m.viewport.Width = msg.Width
-		m.viewport.Height = msg.Height
+		m.viewport.Height = msg.Height - 3
 		// TODO: support re-wrapping older messages to fit new size
 		var vpCmd tea.Cmd
 		m.viewport, vpCmd = m.viewport.Update(msg)

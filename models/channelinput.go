@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
 	"github.com/spf13/viper"
 	"github.com/zigzter/chatterm/twitch"
 	"github.com/zigzter/chatterm/types"
@@ -26,10 +27,13 @@ type ChannelInputModel struct {
 	liveStreams  []types.LiveChannelsData
 	error        string
 	ac           *utils.Trie
+	width        int
 }
 
 func InitialChannelInputModel() ChannelInputModel {
-	model := ChannelInputModel{}
+	model := ChannelInputModel{
+		width: 0,
+	}
 	model.ac = &utils.Trie{Root: utils.NewTrieNode()}
 	utils.InitConfig()
 	authRequired := utils.IsAuthRequired()
@@ -81,6 +85,8 @@ func (m ChannelInputModel) Init() tea.Cmd {
 func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
@@ -127,13 +133,14 @@ func (m ChannelInputModel) View() string {
 			if i > 10 {
 				break
 			}
-			b.WriteString(fmt.Sprintf(
+			liveChannel := fmt.Sprintf(
 				"%s playing %s: %s (%s viewers)\n",
 				channelNameStyle.Render(channel.UserName),
 				gameNameStyle.Render(channel.GameName),
 				titleStyle.Render(channel.Title),
 				viewerCountStyle.Render(fmt.Sprintf("%d", channel.ViewerCount)),
-			))
+			)
+			b.WriteString(wordwrap.String(liveChannel, m.width-4))
 		}
 		b.WriteString("\nEnter channel name:\n")
 		b.WriteString(m.textinput.View() + "\n")

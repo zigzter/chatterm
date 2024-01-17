@@ -48,11 +48,8 @@ func (m RootModel) Init() tea.Cmd {
 func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.Width, m.Height = msg.Width, msg.Height
-		// Not sure why this is necessary. Chat doesn't receive resize msg without it
-		newChat, chatCmd := m.Chat.Update(msg)
-		m.Chat = newChat.(ChatModel)
-		return m, chatCmd
+		m.Width = msg.Width
+		m.Height = msg.Height
 	case ChangeStateMsg:
 		m.State = msg.NewState
 		// This is to handle pressing enter on a pre-filled ChannelInput value
