@@ -55,7 +55,7 @@ func FormatSubMessage(message types.SubMessage) string {
 
 func FormatAnnouncementMessage(message types.AnnouncementMessage) string {
 	return fmt.Sprintf(
-		"[%s][Announcement]%s: %s",
+		"[%s][Announcement]%s: %s\n",
 		message.Timestamp,
 		usernameColorizer(message.Color).Render(message.DisplayName),
 		message.Message,

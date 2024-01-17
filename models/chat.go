@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
 	"github.com/spf13/viper"
 	"github.com/zigzter/chatterm/twitch"
 	"github.com/zigzter/chatterm/types"
@@ -29,7 +30,7 @@ type ChatModel struct {
 }
 
 func InitialChatModel(width int, height int) ChatModel {
-	vp := viewport.New(width-5, height-5)
+	vp := viewport.New(width, height)
 	vp.SetContent("")
 	utils.InitConfig()
 	username := viper.GetString("username")
@@ -55,6 +56,8 @@ func InitialChatModel(width int, height int) ChatModel {
 		WsClient:  wsClient,
 		channel:   channel,
 		ac:        &utils.Trie{Root: utils.NewTrieNode()},
+		width:     width,
+		height:    height,
 	}
 }
 
@@ -169,14 +172,18 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, listenToWebSocket(m.msgChan)
 		}
 	case tea.WindowSizeMsg:
-		m.width, m.height = msg.Width-5, msg.Height-5
-		m.viewport.Width = m.width
-		m.viewport.Height = m.height - lipgloss.Height(m.textinput.View())
-		return m, listenToWebSocket(m.msgChan)
+		m.viewport.Width = msg.Width
+		m.viewport.Height = msg.Height
+		// TODO: support re-wrapping older messages to fit new size
+		var vpCmd tea.Cmd
+		m.viewport, vpCmd = m.viewport.Update(msg)
+		return m, tea.Batch(listenToWebSocket(m.msgChan), vpCmd)
 	case types.ParsedIRCMessage:
 		switch msg := msg.Msg.(type) {
 		case types.ChatMessage:
-			m.chatContent += utils.FormatChatMessage(msg)
+			message := utils.FormatChatMessage(msg)
+			wrappedMsg := wordwrap.String(message, m.viewport.Width-2)
+			m.chatContent += wrappedMsg
 			m.ac.Insert(msg.DisplayName)
 		case types.SubMessage:
 			m.chatContent += utils.FormatSubMessage(msg)
