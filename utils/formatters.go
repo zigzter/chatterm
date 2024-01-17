@@ -40,11 +40,15 @@ func FormatChatMessage(message types.ChatMessage) string {
 	} else if message.IsVIP {
 		icon = vipIcon
 	}
+	color := message.Color
+	if color == "" {
+		color = "#7287fd"
+	}
 	msg := fmt.Sprintf(
 		"[%s]%s%s: %s",
 		message.Timestamp,
 		icon,
-		usernameColorizer(message.Color).Render(message.DisplayName),
+		usernameColorizer(color).Render(message.DisplayName),
 		message.Message,
 	)
 	if message.IsFirstMessage {
