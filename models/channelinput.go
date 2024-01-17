@@ -122,6 +122,7 @@ func (m ChannelInputModel) View() string {
 		if m.error != "" {
 			b.WriteString("Live channel retrieval error:" + m.error)
 		}
+		// TODO: add pagination
 		for i, channel := range m.liveStreams {
 			if i > 10 {
 				break

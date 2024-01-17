@@ -29,7 +29,7 @@ type ChatModel struct {
 }
 
 func InitialChatModel(width int, height int) ChatModel {
-	vp := viewport.New(width-2, height-2)
+	vp := viewport.New(width-5, height-5)
 	vp.SetContent("")
 	utils.InitConfig()
 	username := viper.GetString("username")
@@ -106,7 +106,7 @@ func (m ChatModel) Init() tea.Cmd {
 }
 
 func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -169,45 +169,43 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, listenToWebSocket(m.msgChan)
 		}
 	case tea.WindowSizeMsg:
-		m.width, m.height = msg.Width, msg.Height
+		m.width, m.height = msg.Width-5, msg.Height-5
 		m.viewport.Width = m.width
-		m.viewport.Height = m.height
+		m.viewport.Height = m.height - lipgloss.Height(m.textinput.View())
 		return m, listenToWebSocket(m.msgChan)
 	case types.ParsedIRCMessage:
 		switch msg := msg.Msg.(type) {
 		case types.ChatMessage:
 			m.chatContent += utils.FormatChatMessage(msg)
-			m.viewport.SetContent(m.chatContent)
 			m.ac.Insert(msg.DisplayName)
 		case types.SubMessage:
 			m.chatContent += utils.FormatSubMessage(msg)
-			m.viewport.SetContent(m.chatContent)
 		case types.SubGiftMessage:
 			m.chatContent += utils.FormatGiftSubMessage(msg)
-			m.viewport.SetContent(m.chatContent)
 		case types.RaidMessage:
 			m.chatContent += utils.FormatRaidMessage(msg)
-			m.viewport.SetContent(m.chatContent)
 		case types.AnnouncementMessage:
 			m.chatContent += utils.FormatAnnouncementMessage(msg)
-			m.viewport.SetContent(m.chatContent)
 		case types.UserListMessage:
 			m.ac.Populate(msg.Users)
-			m.viewport.SetContent(m.chatContent)
 		}
+		m.viewport.SetContent(m.chatContent)
 		m.viewport.GotoBottom()
 		return m, listenToWebSocket(m.msgChan)
 
 	}
-	m.textinput, cmd = m.textinput.Update(msg)
-	return m, cmd
+	var tiCmd tea.Cmd
+	var vpCmd tea.Cmd
+	m.textinput, tiCmd = m.textinput.Update(msg)
+	m.viewport, vpCmd = m.viewport.Update(msg)
+	cmds = append(cmds, tiCmd, vpCmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m ChatModel) View() string {
-	return fmt.Sprintf(
-		"%s\n%s\n%s",
-		m.viewport.View(),
-		m.textinput.View(),
-		helpStyle.Render("[Esc]: return to channel selection - [Ctrl+c]: quit - [tab]: autocomplete"),
-	)
+	var b strings.Builder
+	b.WriteString(m.viewport.View() + "\n")
+	b.WriteString(m.textinput.View() + "\n")
+	b.WriteString(helpStyle.Render("[Esc]: return to channel selection - [Ctrl+c]: quit - [tab]: autocomplete"))
+	return b.String()
 }
