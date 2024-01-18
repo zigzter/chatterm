@@ -72,7 +72,6 @@ func EstablishWSConnection(client *WebSocketClient, channel string, username str
 				db.InsertUserMap(sql, chatMessage.DisplayName, chatMessage.UserId)
 				msgChan <- types.ParsedIRCMessage{Msg: chatMessage}
 			case usernoticeRegex.MatchString(rawIrcMessage):
-				log.Println(rawIrcMessage)
 				usernoticeMessage := UsernoticeParser(rawIrcMessage)
 				msgChan <- types.ParsedIRCMessage{Msg: usernoticeMessage}
 			case joinRegex.MatchString(rawIrcMessage):

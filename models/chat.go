@@ -16,21 +16,25 @@ import (
 )
 
 type ChatModel struct {
-	msgChan     chan types.ParsedIRCMessage
-	chatContent string
-	input       string
-	textinput   textinput.Model
-	viewport    viewport.Model
-	width       int
-	height      int
-	channel     string
-	WsClient    *utils.WebSocketClient
-	ac          *utils.Trie
+	msgChan          chan types.ParsedIRCMessage
+	chatContent      string
+	input            string
+	textinput        textinput.Model
+	viewport         viewport.Model
+	width            int
+	height           int
+	channel          string
+	WsClient         *utils.WebSocketClient
+	ac               *utils.Trie
+	infoview         viewport.Model
+	shouldRenderInfo bool
 }
 
 func InitialChatModel(width int, height int) ChatModel {
-	vp := viewport.New(width, height-3)
+	vp := viewport.New(width-2, height-5)
 	vp.SetContent("")
+	ip := viewport.New((width/2)-2, height-5)
+	ip.SetContent("")
 	utils.InitConfig()
 	username := viper.GetString("username")
 	oauth := fmt.Sprintf("oauth:%s", viper.GetString("token"))
@@ -48,15 +52,17 @@ func InitialChatModel(width int, height int) ChatModel {
 	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	ti.Focus()
 	return ChatModel{
-		input:     "",
-		textinput: ti,
-		viewport:  vp,
-		msgChan:   msgChan,
-		WsClient:  wsClient,
-		channel:   channel,
-		ac:        &utils.Trie{Root: utils.NewTrieNode()},
-		width:     width,
-		height:    height,
+		input:            "",
+		textinput:        ti,
+		viewport:         vp,
+		msgChan:          msgChan,
+		WsClient:         wsClient,
+		channel:          channel,
+		ac:               &utils.Trie{Root: utils.NewTrieNode()},
+		width:            width,
+		height:           height,
+		infoview:         ip,
+		shouldRenderInfo: false,
 	}
 }
 
@@ -114,6 +120,9 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC:
 			return m, tea.Quit
+		case tea.KeyCtrlX:
+			m.shouldRenderInfo = false
+			m.viewport.Width = m.width - 2
 		case tea.KeyEsc:
 			m.WsClient.Conn.Close()
 			return ChangeView(m, ChannelInputState)
@@ -143,15 +152,21 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								feedback = fmt.Sprintf("You timed out %s until %s\n", args[0], data.EndTime)
 							}
 						case *types.UserInfo:
+							m.shouldRenderInfo = true
+							m.viewport.Width = (m.width / 2) - 2
 							details := resp.Details
 							following := resp.Following
 							// TODO: Change "Following since" if not following
 							feedback = fmt.Sprintf(
-								"User: %s. Account created: %s. Following since %s\n",
+								"User: %s.\nAccount created: %s.\nFollowing since %s\n",
 								details.DisplayName,
 								details.CreatedAt,
 								following.FollowedAt,
 							)
+							m.infoview.SetContent(feedback)
+							m.textinput.Reset()
+							m.ac.Prefix = ""
+							return m, listenToWebSocket(m.msgChan)
 						case nil:
 							// TODO: find a better way to do this?
 							feedback = fmt.Sprintf("Successfully ran %s command\n", command)
@@ -171,12 +186,23 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, listenToWebSocket(m.msgChan)
 		}
 	case tea.WindowSizeMsg:
-		m.viewport.Width = msg.Width
-		m.viewport.Height = msg.Height - 3
+		if m.shouldRenderInfo {
+			m.width = (msg.Width / 2) - 2
+			m.viewport.Width = m.width
+			m.infoview.Width = m.width
+		} else {
+			m.width = msg.Width - 2
+			m.viewport.Width = msg.Width - 2
+			m.infoview.Width = 0
+		}
+		m.viewport.Height = msg.Height - 5
+		m.infoview.Height = msg.Height - 5
 		// TODO: support re-wrapping older messages to fit new size
 		var vpCmd tea.Cmd
+		var ipCmd tea.Cmd
 		m.viewport, vpCmd = m.viewport.Update(msg)
-		return m, tea.Batch(listenToWebSocket(m.msgChan), vpCmd)
+		m.infoview, ipCmd = m.infoview.Update(msg)
+		return m, tea.Batch(listenToWebSocket(m.msgChan), vpCmd, ipCmd)
 	case types.ParsedIRCMessage:
 		width := m.viewport.Width - 2
 		switch msg := msg.Msg.(type) {
@@ -210,9 +236,28 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m ChatModel) View() string {
+	var viewportStyle = lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("#8839ef")).
+		Width(m.viewport.Width)
+	var infoStyle = lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("#8839ef")).
+		Width(m.infoview.Width)
 	var b strings.Builder
-	b.WriteString(m.viewport.View() + "\n")
+	infoCloseMessage := ""
+	if m.shouldRenderInfo {
+		infoCloseMessage = " - [Ctrl+x] close info view"
+		b.WriteString(lipgloss.JoinHorizontal(
+			0,
+			viewportStyle.Render(m.viewport.View()),
+			infoStyle.Render(m.infoview.View())) + "\n",
+		)
+	} else {
+		infoCloseMessage = ""
+		b.WriteString(viewportStyle.Render(m.viewport.View()) + "\n")
+	}
 	b.WriteString(m.textinput.View() + "\n")
-	b.WriteString(helpStyle.Render("[Esc]: return to channel selection - [Ctrl+c]: quit - [tab]: autocomplete"))
+	b.WriteString(helpStyle.Render("[Esc]: return to channel selection - [Ctrl+c]: quit - [tab]: autocomplete" + infoCloseMessage))
 	return b.String()
 }
