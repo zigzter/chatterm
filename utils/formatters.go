@@ -2,29 +2,53 @@ package utils
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/zigzter/chatterm/types"
 )
 
+const (
+	newMsgColor       = "#e64553"
+	subColor          = "#04a5e5"
+	announcementColor = "#40a02b"
+	raidColor         = "#fe640b"
+)
+
+type boxWithLabel struct {
+	BoxStyle   lipgloss.Style
+	LabelStyle lipgloss.Style
+}
+
+func newBoxWithLabel(color string) boxWithLabel {
+	return boxWithLabel{
+		BoxStyle:   lipgloss.NewStyle().Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color(color)).Padding(0),
+		LabelStyle: lipgloss.NewStyle().Padding(0),
+	}
+}
+
+func (b boxWithLabel) Render(label, content string) string {
+	var (
+		border          lipgloss.Border             = b.BoxStyle.GetBorderStyle()
+		topBorderStyler func(strs ...string) string = lipgloss.NewStyle().Foreground(b.BoxStyle.GetBorderTopForeground()).Render
+		topLeft         string                      = topBorderStyler(border.TopLeft)
+		topRight        string                      = topBorderStyler(border.TopRight)
+		renderedLabel   string                      = b.LabelStyle.Render(label)
+	)
+	width := lipgloss.Width(content)
+	borderWidth := b.BoxStyle.GetHorizontalBorderSize()
+	cellsShort := max(0, width+borderWidth-lipgloss.Width(topLeft+topRight+renderedLabel))
+	gap := strings.Repeat(border.Top, cellsShort)
+	top := topLeft + renderedLabel + topBorderStyler(gap) + topRight
+	bottom := b.BoxStyle.Copy().
+		BorderTop(false).
+		Width(width).
+		Render(content)
+	return top + "\n" + bottom + "\n"
+}
+
 func usernameColorizer(color string) lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
-}
-
-func firstMessageColorizer() lipgloss.Style {
-	return lipgloss.NewStyle().Background(lipgloss.Color("#fe640b"))
-}
-
-func highlighter(msg string, color string) string {
-	return lipgloss.NewStyle().
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color(color)).
-		BorderTop(true).
-		BorderRight(true).
-		BorderBottom(true).
-		Padding(0).
-		Margin(0).
-		Render(msg) + "\n"
 }
 
 func iconColorizer(color string) lipgloss.Style {
@@ -44,6 +68,7 @@ func FormatChatMessage(message types.ChatMessage) string {
 	if color == "" {
 		color = "#7287fd"
 	}
+	box := newBoxWithLabel(newMsgColor)
 	msg := fmt.Sprintf(
 		"[%s]%s%s: %s",
 		message.Timestamp,
@@ -52,7 +77,7 @@ func FormatChatMessage(message types.ChatMessage) string {
 		message.Message,
 	)
 	if message.IsFirstMessage {
-		return highlighter(msg, "#e64553")
+		return box.Render("First message", msg)
 	} else {
 		return msg + "\n"
 	}
@@ -65,52 +90,52 @@ func FormatSubMessage(message types.SubMessage) string {
 	} else {
 		fullMessage = "!"
 	}
+	box := newBoxWithLabel(subColor)
 	msg := fmt.Sprintf(
-		"[%s]%s subscribed for %s months%s",
-		message.Timestamp,
+		"%s subscribed for %s months%s",
 		usernameColorizer(message.Color).Render(message.DisplayName),
 		message.Months,
 		fullMessage,
 	)
-	return highlighter(msg, "12")
+	return box.Render("Sub", msg)
 }
 
 func FormatAnnouncementMessage(message types.AnnouncementMessage) string {
+	box := newBoxWithLabel(announcementColor)
 	msg := fmt.Sprintf(
-		"[%s][Announcement]%s: %s",
-		message.Timestamp,
+		"[Announcement]%s: %s",
 		usernameColorizer(message.Color).Render(message.DisplayName),
 		message.Message,
 	)
-	return highlighter(msg, "228")
+	return box.Render("Announcement", msg)
 }
 
 func FormatRaidMessage(message types.RaidMessage) string {
+	box := newBoxWithLabel(raidColor)
 	msg := fmt.Sprintf(
-		"[%s]%s raided the channel with %s viewers!",
-		message.Timestamp,
+		"%s raided the channel with %s viewers!",
 		usernameColorizer(message.Color).Render(message.DisplayName),
 		message.ViewerCount,
 	)
-	return highlighter(msg, "12")
+	return box.Render("Raid", msg)
 }
 
 func FormatGiftSubMessage(message types.SubGiftMessage) string {
+	box := newBoxWithLabel(subColor)
 	msg := fmt.Sprintf(
-		"[%s]%s gifted a subscription to %s",
-		message.Timestamp,
+		"%s gifted a subscription to %s!",
 		usernameColorizer(message.Color).Render(message.GiverName),
 		message.ReceiverName,
 	)
-	return highlighter(msg, "12")
+	return box.Render("Gift sub", msg)
 }
 
 func FormatMysteryGiftSubMessage(message types.MysterySubGiftMessage) string {
+	box := newBoxWithLabel(subColor)
 	msg := fmt.Sprintf(
-		"[%s]%s is giving %s subs to the channel!",
-		message.Timestamp,
+		"%s is giving %s subs to the channel!",
 		usernameColorizer(message.Color).Render(message.GiverName),
 		message.GiftAmount,
 	)
-	return highlighter(msg, "9")
+	return box.Render("Gifting subs", msg)
 }
