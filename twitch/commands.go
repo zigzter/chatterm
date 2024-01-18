@@ -38,8 +38,8 @@ func httpClient() *http.Client {
 // augmentRequest adds the broadcaster_id and moderator_id query params,
 // as well as setting auth and client id headers.
 func augmentRequest(req *http.Request) *http.Request {
-	channelid := viper.GetString("channelid")
-	moderatorId := viper.GetString("userid")
+	channelid := viper.GetString("channel-id")
+	moderatorId := viper.GetString("user-id")
 	token := viper.GetString("token")
 	query := req.URL.Query()
 	query.Add("broadcaster_id", channelid)
@@ -65,8 +65,20 @@ func fireRequest(req *http.Request) ([]byte, error) {
 	return bodyBytes, nil
 }
 
+func isValidCommand(command string) bool {
+	switch types.TwitchCommand(command) {
+	case types.Ban, types.Clear, types.Unban, types.Delete, types.Info:
+		return true
+	}
+	return false
+}
+
 // SendTwitchCommand sends a request to the Twitch Helix API to perform a command
 func SendTwitchCommand(command types.TwitchCommand, args []string) (interface{}, error) {
+	// TwitchCommand is a string, why do I need to convert it to one here?
+	if isValid := isValidCommand(string(command)); !isValid {
+		return nil, errors.New("Invalid command")
+	}
 	switch command {
 	case types.Ban:
 		return sendBanRequest(args)
@@ -122,6 +134,7 @@ func sendFollowersRequest(args []string) (*types.FollowersResp, error) {
 	return &followerData, nil
 }
 
+// sendInfoRequest hits several API endpoints and returns a single collection of user data
 func sendInfoRequest(username string) (*types.UserInfo, error) {
 	userInfo := types.UserInfo{}
 	userResp, err := SendUserRequest(username)
@@ -129,6 +142,7 @@ func sendInfoRequest(username string) (*types.UserInfo, error) {
 		return nil, err
 	}
 	userInfo.Details = userResp.Data[0]
+	// isModerator := viper.GetString("is-mod")
 	followerResp, err := sendFollowersRequest([]string{userInfo.Details.ID})
 	if err != nil {
 		return nil, err

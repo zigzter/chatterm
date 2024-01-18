@@ -51,7 +51,7 @@ func InitialChannelInputModel() ChannelInputModel {
 }
 
 func fetchLiveStreams(m *ChannelInputModel) {
-	userID := viper.GetString("userid")
+	userID := viper.GetString("user-id")
 	if userID == "" {
 		username := viper.GetString("username")
 		userData, err := twitch.SendUserRequest(username)

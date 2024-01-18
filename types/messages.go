@@ -79,6 +79,21 @@ type UserListMessage struct {
 	Users []string
 }
 
+type UserStateMessage struct {
+	Color         string
+	IsMod         bool
+	IsBroadcaster bool
+}
+
+type RoomStateMessage struct {
+	ChannelID     string
+	EmoteOnly     bool
+	FollowersOnly bool
+	SubsOnly      bool
+	UniqueOnly    bool // Whether subsequent messages must be unique
+	Slow          int  // Amount of seconds users must wait to send new messages
+}
+
 func (cm ChatMessage) Implements() {}
 
 func (sm SubMessage) Implements() {}
@@ -90,6 +105,10 @@ func (mg MysterySubGiftMessage) Implements() {}
 func (rm RaidMessage) Implements() {}
 
 func (ul UserListMessage) Implements() {}
+
+func (us UserStateMessage) Implements() {}
+
+func (us RoomStateMessage) Implements() {}
 
 func (am AnnouncementMessage) Implements() {}
 

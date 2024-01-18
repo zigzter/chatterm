@@ -2,7 +2,6 @@ package utils
 
 import (
 	"log"
-	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -35,53 +34,6 @@ func InitConfig() {
 func SaveConfig(options map[string]interface{}) {
 	for key, value := range options {
 		viper.Set(key, value)
-	}
-	if err := viper.WriteConfig(); err != nil {
-		log.Println("Error saving config:", err)
-	}
-}
-
-// StoreUserState processes the GLOBALUSERSTATE IRC message,
-// storing any relevant data to Viper
-// TODO: Change this to a user request at app start
-func StoreUserState(input string) {
-	parts := strings.SplitN(input, ">", 2)
-	metadata := parts[1]
-	keyValPairs := strings.Split(metadata, ";")
-	for _, kvPair := range keyValPairs {
-		kv := strings.Split(kvPair, "=")
-		if len(kv) == 2 {
-			key := kv[0]
-			value := kv[1]
-			switch key {
-			case "user-id":
-				viper.Set("userId", value)
-			case "color":
-				viper.Set("color", value)
-			}
-		}
-	}
-	if err := viper.WriteConfig(); err != nil {
-		log.Println("Error saving config:", err)
-	}
-}
-
-// StoreRoomState processes the ROOMSTATE IRC message,
-// storing any relevant data to Viper
-func StoreRoomState(input string) {
-	parts := strings.SplitN(input, "\n", 2)
-	metadata := parts[1]
-	keyValPairs := strings.Split(metadata, ";")
-	for _, kvPair := range keyValPairs {
-		kv := strings.Split(kvPair, "=")
-		if len(kv) == 2 {
-			key := kv[0]
-			value := kv[1]
-			switch key {
-			case "room-id":
-				viper.Set("channelid", value)
-			}
-		}
 	}
 	if err := viper.WriteConfig(); err != nil {
 		log.Println("Error saving config:", err)

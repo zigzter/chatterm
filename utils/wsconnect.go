@@ -12,15 +12,15 @@ import (
 )
 
 var (
-	msgRegex             *regexp.Regexp = regexp.MustCompile(`\bPRIVMSG\b`)
-	usernoticeRegex      *regexp.Regexp = regexp.MustCompile(`\bUSERNOTICE\b`)
-	globalUserStateRegex *regexp.Regexp = regexp.MustCompile(`\bGLOBALUSERSTATE\b`)
-	roomStateRegex       *regexp.Regexp = regexp.MustCompile(`\bROOMSTATE\b`)
-	joinRegex            *regexp.Regexp = regexp.MustCompile(`\bJOIN\b`)
-	partRegex            *regexp.Regexp = regexp.MustCompile(`\bPART\b`)
-	pingRegex            *regexp.Regexp = regexp.MustCompile(`\bPING\b`)
-	listUsersRegex       *regexp.Regexp = regexp.MustCompile(`\b353\b`)
-	cmdRegex             *regexp.Regexp = regexp.MustCompile(`^!(\w+)\s?(\w+)?`)
+	msgRegex        *regexp.Regexp = regexp.MustCompile(`\bPRIVMSG\b`)
+	usernoticeRegex *regexp.Regexp = regexp.MustCompile(`\bUSERNOTICE\b`)
+	userStateRegex  *regexp.Regexp = regexp.MustCompile(`\bUSERSTATE\b`)
+	roomStateRegex  *regexp.Regexp = regexp.MustCompile(`\bROOMSTATE\b`)
+	joinRegex       *regexp.Regexp = regexp.MustCompile(`\bJOIN\b`)
+	partRegex       *regexp.Regexp = regexp.MustCompile(`\bPART\b`)
+	pingRegex       *regexp.Regexp = regexp.MustCompile(`\bPING\b`)
+	listUsersRegex  *regexp.Regexp = regexp.MustCompile(`\b353\b`)
+	cmdRegex        *regexp.Regexp = regexp.MustCompile(`^!(\w+)\s?(\w+)?`)
 )
 
 type WebSocketClient struct {
@@ -81,12 +81,20 @@ func EstablishWSConnection(client *WebSocketClient, channel string, username str
 				msgChan <- types.ParsedIRCMessage{Msg: userListMessage}
 			case pingRegex.MatchString(rawIrcMessage):
 				client.SendMessage([]byte("PONG :tmi.twitch.tv"))
-			case globalUserStateRegex.MatchString(rawIrcMessage):
-				StoreUserState(rawIrcMessage)
+			case userStateRegex.MatchString(rawIrcMessage):
+				// Initial join ROOMSTATE message seems to be appended to the USERSTATE message
+				stateMessages := strings.Split(rawIrcMessage, "\n")
+				userStateMessage := UserStateParser(stateMessages[0])
+				roomStateMessage := RoomStateParser(stateMessages[1])
+				msgChan <- types.ParsedIRCMessage{Msg: userStateMessage}
+				msgChan <- types.ParsedIRCMessage{Msg: roomStateMessage}
 			case roomStateRegex.MatchString(rawIrcMessage):
-				StoreRoomState(rawIrcMessage)
+				// We're keeping this in addition to the above parser,
+				// since room updates like turning slow mode on will trigger this
+				roomStateMessage := RoomStateParser(rawIrcMessage)
+				msgChan <- types.ParsedIRCMessage{Msg: roomStateMessage}
 			default:
-				log.Println(rawIrcMessage)
+				// log.Println(rawIrcMessage)
 			}
 		}
 	}

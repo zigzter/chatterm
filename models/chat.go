@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
 	"github.com/spf13/viper"
 	"github.com/zigzter/chatterm/twitch"
 	"github.com/zigzter/chatterm/types"
@@ -28,6 +29,9 @@ type ChatModel struct {
 	ac               *utils.Trie
 	infoview         viewport.Model
 	shouldRenderInfo bool
+	messages         []types.ChatMessage
+	isMod            bool
+	isBroadcaster    bool
 }
 
 func InitialChatModel(width int, height int) ChatModel {
@@ -37,6 +41,8 @@ func InitialChatModel(width int, height int) ChatModel {
 	ip.SetContent("")
 	utils.InitConfig()
 	username := viper.GetString("username")
+	isMod := viper.GetBool("is-mod")
+	isBroadcaster := viper.GetBool("is-broadcaster")
 	oauth := fmt.Sprintf("oauth:%s", viper.GetString("token"))
 	channel := viper.GetString("channel")
 	msgChan := make(chan types.ParsedIRCMessage, 100)
@@ -63,6 +69,9 @@ func InitialChatModel(width int, height int) ChatModel {
 		height:           height,
 		infoview:         ip,
 		shouldRenderInfo: false,
+		messages:         make([]types.ChatMessage, 0),
+		isMod:            isMod,
+		isBroadcaster:    isBroadcaster,
 	}
 }
 
@@ -93,14 +102,6 @@ func processChatInput(input string) (isCommand bool, command string, args []stri
 		return true, command, args
 	}
 	return false, "", nil
-}
-
-func isValidCommand(command string) bool {
-	switch types.TwitchCommand(command) {
-	case types.Ban, types.Clear, types.Unban, types.Delete, types.Info:
-		return true
-	}
-	return false
 }
 
 func listenToWebSocket(msgChan <-chan types.ParsedIRCMessage) tea.Cmd {
@@ -137,44 +138,53 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			message := m.textinput.Value()
 			isCommand, command, args := processChatInput(message)
 			if isCommand {
-				if isValidCommand(command) {
-					var feedback string
-					res, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
-					if err != nil {
-						feedback = err.Error()
-					} else {
-						switch resp := res.(type) {
-						case *types.UserBanResp:
-							data := resp.Data[0]
-							if data.EndTime == nil {
-								feedback = fmt.Sprintf("You banned %s from the chat.\n", args[0])
-							} else {
-								feedback = fmt.Sprintf("You timed out %s until %s\n", args[0], data.EndTime)
-							}
-						case *types.UserInfo:
-							m.shouldRenderInfo = true
-							m.viewport.Width = (m.width / 2) - 2
-							details := resp.Details
-							following := resp.Following
-							// TODO: Change "Following since" if not following
-							feedback = fmt.Sprintf(
-								"User: %s.\nAccount created: %s.\nFollowing since %s\n",
-								details.DisplayName,
-								details.CreatedAt,
-								following.FollowedAt,
-							)
-							m.infoview.SetContent(feedback)
-							m.textinput.Reset()
-							m.ac.Prefix = ""
-							return m, listenToWebSocket(m.msgChan)
-						case nil:
-							// TODO: find a better way to do this?
-							feedback = fmt.Sprintf("Successfully ran %s command\n", command)
+				var feedback string
+				res, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
+				if command == "info" {
+					m.shouldRenderInfo = true
+					m.viewport.Width = (m.width / 2) - 2
+					for _, chatMsg := range m.messages {
+						if chatMsg.DisplayName == args[0] {
+							feedback += wordwrap.String(fmt.Sprintf("%s: %s\n", chatMsg.DisplayName, chatMsg.Message), m.infoview.Width)
 						}
-						m.chatContent += feedback
 					}
+					m.infoview.SetContent(feedback)
+					m.textinput.Reset()
+					// not working??
+					m.ac.Prefix = ""
+					return m, listenToWebSocket(m.msgChan)
+				}
+				if err != nil {
+					feedback = err.Error()
 				} else {
-					m.chatContent += fmt.Sprintf("Invalid command: %s\n", command)
+					switch resp := res.(type) {
+					case *types.UserBanResp:
+						data := resp.Data[0]
+						if data.EndTime == nil {
+							feedback = fmt.Sprintf("You banned %s from the chat.\n", args[0])
+						} else {
+							feedback = fmt.Sprintf("You timed out %s until %s\n", args[0], data.EndTime)
+						}
+					case *types.UserInfo:
+						details := resp.Details
+						following := resp.Following
+						// TODO: Change "Following since" if not following
+						feedback = fmt.Sprintf(
+							"User: %s.\nAccount created: %s.\nFollowing since %s\n",
+							details.DisplayName,
+							details.CreatedAt,
+							following.FollowedAt,
+						)
+						// TODO: Make this run even if info request isn't successful to see message history
+						m.infoview.SetContent(feedback)
+						m.textinput.Reset()
+						m.ac.Prefix = ""
+						return m, listenToWebSocket(m.msgChan)
+					case nil:
+						// TODO: find a better way to do this?
+						feedback = fmt.Sprintf("Successfully ran %s command\n", command)
+					}
+					m.chatContent += feedback
 				}
 			} else {
 				m.chatContent += fmt.Sprintf("You: %s\n", message)
@@ -207,6 +217,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		width := m.viewport.Width - 2
 		switch msg := msg.Msg.(type) {
 		case types.ChatMessage:
+			m.messages = append(m.messages, msg)
 			m.chatContent += utils.FormatChatMessage(msg, width)
 			m.ac.Insert(msg.DisplayName)
 		case types.SubMessage:
@@ -221,6 +232,18 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.chatContent += utils.FormatAnnouncementMessage(msg, width)
 		case types.UserListMessage:
 			m.ac.Populate(msg.Users)
+		case types.UserStateMessage:
+			utils.SaveConfig(map[string]interface{}{
+				"color":          msg.Color,
+				"is-mod":         msg.IsMod,
+				"is-broadcaster": msg.IsBroadcaster,
+			})
+			m.isBroadcaster = msg.IsBroadcaster
+			m.isMod = msg.IsMod
+		case types.RoomStateMessage:
+			utils.SaveConfig(map[string]interface{}{
+				"channel-id": msg.ChannelID,
+			})
 		}
 		m.viewport.SetContent(m.chatContent)
 		m.viewport.GotoBottom()
@@ -235,7 +258,19 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
+func iconColorizer(color string) lipgloss.Style {
+	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
+}
+
 func (m ChatModel) View() string {
+	icon := ""
+	modIcon := iconColorizer("#40a02b").Render("[󰓥]")
+	broadcasterIcon := iconColorizer("#ea76cb").Render("[]")
+	if m.isMod {
+		icon = modIcon
+	} else if m.isBroadcaster {
+		icon = broadcasterIcon
+	}
 	var viewportStyle = lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder()).
 		BorderForeground(lipgloss.Color("#8839ef")).
@@ -257,7 +292,7 @@ func (m ChatModel) View() string {
 		infoCloseMessage = ""
 		b.WriteString(viewportStyle.Render(m.viewport.View()) + "\n")
 	}
-	b.WriteString(m.textinput.View() + "\n")
+	b.WriteString(icon + m.textinput.View() + "\n")
 	b.WriteString(helpStyle.Render("[Esc]: return to channel selection - [Ctrl+c]: quit - [tab]: autocomplete" + infoCloseMessage))
 	return b.String()
 }
