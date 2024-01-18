@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/reflow/wordwrap"
 	"github.com/spf13/viper"
 	"github.com/zigzter/chatterm/twitch"
 	"github.com/zigzter/chatterm/types"
@@ -179,22 +178,21 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport, vpCmd = m.viewport.Update(msg)
 		return m, tea.Batch(listenToWebSocket(m.msgChan), vpCmd)
 	case types.ParsedIRCMessage:
+		width := m.viewport.Width - 2
 		switch msg := msg.Msg.(type) {
 		case types.ChatMessage:
-			message := utils.FormatChatMessage(msg)
-			wrappedMsg := wordwrap.String(message, m.viewport.Width-2)
-			m.chatContent += wrappedMsg
+			m.chatContent += utils.FormatChatMessage(msg, width)
 			m.ac.Insert(msg.DisplayName)
 		case types.SubMessage:
-			m.chatContent += utils.FormatSubMessage(msg)
+			m.chatContent += utils.FormatSubMessage(msg, width)
 		case types.SubGiftMessage:
-			m.chatContent += utils.FormatGiftSubMessage(msg)
+			m.chatContent += utils.FormatGiftSubMessage(msg, width)
 		case types.MysterySubGiftMessage:
-			m.chatContent += utils.FormatMysteryGiftSubMessage(msg)
+			m.chatContent += utils.FormatMysteryGiftSubMessage(msg, width)
 		case types.RaidMessage:
-			m.chatContent += utils.FormatRaidMessage(msg)
+			m.chatContent += utils.FormatRaidMessage(msg, width)
 		case types.AnnouncementMessage:
-			m.chatContent += utils.FormatAnnouncementMessage(msg)
+			m.chatContent += utils.FormatAnnouncementMessage(msg, width)
 		case types.UserListMessage:
 			m.ac.Populate(msg.Users)
 		}

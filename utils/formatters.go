@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
 	"github.com/zigzter/chatterm/types"
 )
 
@@ -55,7 +56,7 @@ func iconColorizer(color string) lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
 }
 
-func FormatChatMessage(message types.ChatMessage) string {
+func FormatChatMessage(message types.ChatMessage, width int) string {
 	icon := ""
 	modIcon := iconColorizer("#40a02b").Render("[󰓥]")
 	vipIcon := iconColorizer("#ea76cb").Render("[󰮊]")
@@ -76,6 +77,7 @@ func FormatChatMessage(message types.ChatMessage) string {
 		usernameColorizer(color).Render(message.DisplayName),
 		message.Message,
 	)
+	msg = wordwrap.String(msg, width)
 	if message.IsFirstMessage {
 		return box.Render("First message", msg)
 	} else {
@@ -83,7 +85,7 @@ func FormatChatMessage(message types.ChatMessage) string {
 	}
 }
 
-func FormatSubMessage(message types.SubMessage) string {
+func FormatSubMessage(message types.SubMessage, width int) string {
 	var fullMessage string
 	if message.Message != "" {
 		fullMessage = ": " + message.Message
@@ -97,45 +99,50 @@ func FormatSubMessage(message types.SubMessage) string {
 		message.Months,
 		fullMessage,
 	)
+	msg = wordwrap.String(msg, width)
 	return box.Render("Sub", msg)
 }
 
-func FormatAnnouncementMessage(message types.AnnouncementMessage) string {
+func FormatAnnouncementMessage(message types.AnnouncementMessage, width int) string {
 	box := newBoxWithLabel(announcementColor)
 	msg := fmt.Sprintf(
 		"[Announcement]%s: %s",
 		usernameColorizer(message.Color).Render(message.DisplayName),
 		message.Message,
 	)
+	msg = wordwrap.String(msg, width)
 	return box.Render("Announcement", msg)
 }
 
-func FormatRaidMessage(message types.RaidMessage) string {
+func FormatRaidMessage(message types.RaidMessage, width int) string {
 	box := newBoxWithLabel(raidColor)
 	msg := fmt.Sprintf(
 		"%s raided the channel with %s viewers!",
 		usernameColorizer(message.Color).Render(message.DisplayName),
 		message.ViewerCount,
 	)
+	msg = wordwrap.String(msg, width)
 	return box.Render("Raid", msg)
 }
 
-func FormatGiftSubMessage(message types.SubGiftMessage) string {
+func FormatGiftSubMessage(message types.SubGiftMessage, width int) string {
 	box := newBoxWithLabel(subColor)
 	msg := fmt.Sprintf(
 		"%s gifted a subscription to %s!",
 		usernameColorizer(message.Color).Render(message.GiverName),
 		message.ReceiverName,
 	)
+	msg = wordwrap.String(msg, width)
 	return box.Render("Gift sub", msg)
 }
 
-func FormatMysteryGiftSubMessage(message types.MysterySubGiftMessage) string {
+func FormatMysteryGiftSubMessage(message types.MysterySubGiftMessage, width int) string {
 	box := newBoxWithLabel(subColor)
 	msg := fmt.Sprintf(
 		"%s is giving %s subs to the channel!",
 		usernameColorizer(message.Color).Render(message.GiverName),
 		message.GiftAmount,
 	)
+	msg = wordwrap.String(msg, width)
 	return box.Render("Gifting subs", msg)
 }
