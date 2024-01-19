@@ -142,7 +142,11 @@ func sendInfoRequest(username string) (*types.UserInfo, error) {
 		return nil, err
 	}
 	userInfo.Details = userResp.Data[0]
-	// isModerator := viper.GetString("is-mod")
+	hasModPrivs := viper.GetBool("is-mod") || viper.GetBool("is-broadcoaster")
+	if !hasModPrivs {
+		// The follower endpoint requires moderator privileges
+		return &userInfo, nil
+	}
 	followerResp, err := sendFollowersRequest([]string{userInfo.Details.ID})
 	if err != nil {
 		return nil, err

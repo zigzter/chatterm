@@ -140,20 +140,6 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if isCommand {
 				var feedback string
 				res, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
-				if command == "info" {
-					m.shouldRenderInfo = true
-					m.viewport.Width = (m.width / 2) - 2
-					for _, chatMsg := range m.messages {
-						if chatMsg.DisplayName == args[0] {
-							feedback += wordwrap.String(fmt.Sprintf("%s: %s\n", chatMsg.DisplayName, chatMsg.Message), m.infoview.Width)
-						}
-					}
-					m.infoview.SetContent(feedback)
-					m.textinput.Reset()
-					// not working??
-					m.ac.Prefix = ""
-					return m, listenToWebSocket(m.msgChan)
-				}
 				if err != nil {
 					feedback = err.Error()
 				} else {
@@ -166,19 +152,32 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							feedback = fmt.Sprintf("You timed out %s until %s\n", args[0], data.EndTime)
 						}
 					case *types.UserInfo:
+						m.shouldRenderInfo = true
+						m.viewport.Width = (m.width / 2) - 2
 						details := resp.Details
 						following := resp.Following
-						// TODO: Change "Following since" if not following
-						feedback = fmt.Sprintf(
-							"User: %s.\nAccount created: %s.\nFollowing since %s\n",
+						followingText := ""
+						if following.FollowedAt != "" {
+							followingText = "Following since: " + following.FollowedAt
+						}
+						feedback := fmt.Sprintf(
+							"User: %s.\nAccount created: %s.\n%s\n",
 							details.DisplayName,
 							details.CreatedAt,
-							following.FollowedAt,
+							followingText,
 						)
-						// TODO: Make this run even if info request isn't successful to see message history
-						m.infoview.SetContent(feedback)
+						for _, chatMsg := range m.messages {
+							if chatMsg.DisplayName == args[0] {
+								// TODO: move this out of the loop
+								nameColor := lipgloss.NewStyle().Foreground(lipgloss.Color(chatMsg.Color))
+								feedback += wordwrap.String(
+									fmt.Sprintf("%s: %s\n", nameColor.Render(chatMsg.DisplayName), chatMsg.Message),
+									m.infoview.Width,
+								)
+							}
+						}
 						m.textinput.Reset()
-						m.ac.Prefix = ""
+						m.infoview.SetContent(feedback)
 						return m, listenToWebSocket(m.msgChan)
 					case nil:
 						// TODO: find a better way to do this?

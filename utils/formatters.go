@@ -106,7 +106,7 @@ func FormatSubMessage(message types.SubMessage, width int) string {
 func FormatAnnouncementMessage(message types.AnnouncementMessage, width int) string {
 	box := newBoxWithLabel(announcementColor)
 	msg := fmt.Sprintf(
-		"[Announcement]%s: %s",
+		"%s: %s",
 		usernameColorizer(message.Color).Render(message.DisplayName),
 		message.Message,
 	)

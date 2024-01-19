@@ -8,6 +8,7 @@ import (
 )
 
 func InsertChatMessage(db *sql.DB, msg types.InsertChat) {
+	// TODO: add channel message was sent in
 	sqlStatement := `
         INSERT INTO chat_messages (username, user_id, content, timestamp) 
         VALUES (?, ?, ?, ?)`
