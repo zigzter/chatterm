@@ -16,19 +16,25 @@ const (
 	raidColor         = "#fe640b"
 )
 
-type boxWithLabel struct {
+type BoxWithLabel struct {
 	BoxStyle   lipgloss.Style
 	LabelStyle lipgloss.Style
+	width      int
 }
 
-func newBoxWithLabel(color string) boxWithLabel {
-	return boxWithLabel{
+func NewBoxWithLabel(color string) BoxWithLabel {
+	return BoxWithLabel{
 		BoxStyle:   lipgloss.NewStyle().Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color(color)).Padding(0),
 		LabelStyle: lipgloss.NewStyle().Padding(0),
 	}
 }
 
-func (b boxWithLabel) Render(label, content string) string {
+func (b *BoxWithLabel) SetWidth(width int) *BoxWithLabel {
+	b.width = width
+	return b
+}
+
+func (b *BoxWithLabel) Render(label, content string) string {
 	var (
 		border          lipgloss.Border             = b.BoxStyle.GetBorderStyle()
 		topBorderStyler func(strs ...string) string = lipgloss.NewStyle().Foreground(b.BoxStyle.GetBorderTopForeground()).Render
@@ -37,6 +43,9 @@ func (b boxWithLabel) Render(label, content string) string {
 		renderedLabel   string                      = b.LabelStyle.Render(label)
 	)
 	width := lipgloss.Width(content)
+	if b.width != 0 {
+		width = b.width
+	}
 	borderWidth := b.BoxStyle.GetHorizontalBorderSize()
 	cellsShort := max(0, width+borderWidth-lipgloss.Width(topLeft+topRight+renderedLabel))
 	gap := strings.Repeat(border.Top, cellsShort)
@@ -72,7 +81,7 @@ func FormatChatMessage(message types.ChatMessage, width int) string {
 	if color == "" {
 		color = "#7287fd"
 	}
-	box := newBoxWithLabel(newMsgColor)
+	box := NewBoxWithLabel(newMsgColor)
 	msg := fmt.Sprintf(
 		"[%s]%s%s: %s",
 		message.Timestamp,
@@ -95,7 +104,7 @@ func FormatSubMessage(message types.SubMessage, width int) string {
 	} else {
 		fullMessage = "!"
 	}
-	box := newBoxWithLabel(subColor)
+	box := NewBoxWithLabel(subColor)
 	msg := fmt.Sprintf(
 		"%s subscribed for %s months%s",
 		usernameColorizer(message.Color).Render(message.DisplayName),
@@ -107,7 +116,7 @@ func FormatSubMessage(message types.SubMessage, width int) string {
 }
 
 func FormatAnnouncementMessage(message types.AnnouncementMessage, width int) string {
-	box := newBoxWithLabel(announcementColor)
+	box := NewBoxWithLabel(announcementColor)
 	msg := fmt.Sprintf(
 		"%s: %s",
 		usernameColorizer(message.Color).Render(message.DisplayName),
@@ -118,7 +127,7 @@ func FormatAnnouncementMessage(message types.AnnouncementMessage, width int) str
 }
 
 func FormatRaidMessage(message types.RaidMessage, width int) string {
-	box := newBoxWithLabel(raidColor)
+	box := NewBoxWithLabel(raidColor)
 	msg := fmt.Sprintf(
 		"%s raided the channel with %s viewers!",
 		usernameColorizer(message.Color).Render(message.DisplayName),
@@ -129,7 +138,7 @@ func FormatRaidMessage(message types.RaidMessage, width int) string {
 }
 
 func FormatGiftSubMessage(message types.SubGiftMessage, width int) string {
-	box := newBoxWithLabel(subColor)
+	box := NewBoxWithLabel(subColor)
 	msg := fmt.Sprintf(
 		"%s gifted a subscription to %s!",
 		usernameColorizer(message.Color).Render(message.GiverName),
@@ -140,7 +149,7 @@ func FormatGiftSubMessage(message types.SubGiftMessage, width int) string {
 }
 
 func FormatMysteryGiftSubMessage(message types.MysterySubGiftMessage, width int) string {
-	box := newBoxWithLabel(subColor)
+	box := NewBoxWithLabel(subColor)
 	msg := fmt.Sprintf(
 		"%s is giving %s subs to the channel!",
 		usernameColorizer(message.Color).Render(message.GiverName),

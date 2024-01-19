@@ -43,6 +43,7 @@ type ChatModel struct {
 	color            string
 	channelUserType  string
 	chatSettings     ChatSettings
+	labelBox         utils.BoxWithLabel
 }
 
 func InitialChatModel(width int, height int) ChatModel {
@@ -66,6 +67,7 @@ func InitialChatModel(width int, height int) ChatModel {
 	ti.CharLimit = 256
 	ti.Placeholder = "Send a message"
 	ti.Focus()
+	labelBox := utils.NewBoxWithLabel("#8839ef")
 	return ChatModel{
 		input:            "",
 		textinput:        ti,
@@ -82,6 +84,7 @@ func InitialChatModel(width int, height int) ChatModel {
 		username:         username,
 		color:            color,
 		channelUserType:  channelUserType,
+		labelBox:         labelBox,
 		chatSettings: ChatSettings{
 			Slow: "0",
 		},
@@ -305,26 +308,18 @@ func iconColorizer(color string) lipgloss.Style {
 }
 
 func (m ChatModel) View() string {
-	var viewportStyle = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#8839ef")).
-		Width(m.viewport.Width)
-	var infoStyle = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#8839ef")).
-		Width(m.infoview.Width)
 	var b strings.Builder
 	infoCloseMessage := ""
 	if m.shouldRenderInfo {
 		infoCloseMessage = " - [Ctrl+x] close info view"
 		b.WriteString(lipgloss.JoinHorizontal(
 			0,
-			viewportStyle.Render(m.viewport.View()),
-			infoStyle.Render(m.infoview.View())) + "\n",
+			m.labelBox.SetWidth(m.viewport.Width).Render(m.channel, m.viewport.View()),
+			m.labelBox.SetWidth(m.infoview.Width).Render("User info", m.infoview.View())) + "\n",
 		)
 	} else {
 		infoCloseMessage = ""
-		b.WriteString(viewportStyle.Render(m.viewport.View()) + "\n")
+		b.WriteString(m.labelBox.SetWidth(m.viewport.Width).Render(m.channel, m.viewport.View()) + "\n")
 	}
 	icon := utils.GenerateIcon(m.channelUserType)
 	chatSettingsString := ""
