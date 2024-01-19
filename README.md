@@ -2,7 +2,9 @@
 
 Twitch chat in the terminal, with moderator actions.
 
-![Chat app preview image](./chat.png)
+![Chat app preview image](./chat_view.png)
+
+![Chat app preview image](./info_view.png)
 
 ![Chat app channel input image](./channel_input.png)
 
@@ -42,10 +44,10 @@ Simply download the binary and run `./chatterm`
 - [x] Add ability to send chats
 - [x] Store Oauth and username in a local config
 - [ ] Customize chat output (show/hide badges, colors for first chatters, etc)
-- [ ] Query user info
+- [x] Query user info
 - [ ] Handle network drops
 - [ ] Allow saving chat to file
 - [ ] Allow searching chat
-- [ ] Find a better method of rendering chats
+- [x] Find a better method of rendering chats
 - [x] Perform moderator actions (currently only ban/timeout & clear chat)
 

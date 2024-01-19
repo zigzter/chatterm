@@ -322,7 +322,7 @@ func (m ChatModel) View() string {
 		b.WriteString(m.labelBox.SetWidth(m.viewport.Width).Render(m.channel, m.viewport.View()))
 	}
 	icon := utils.GenerateIcon(m.channelUserType)
-	chatSettingsString := ""
+	chatSettingsString := "\n"
 	if m.chatSettings.SubOnly {
 		chatSettingsString += "[Sub Only]"
 	}
