@@ -52,19 +52,20 @@ func usernameColorizer(color string) lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
 }
 
-func iconColorizer(color string) lipgloss.Style {
-	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
+func GenerateIcon(userType string) string {
+	switch userType {
+	case "broadcaster":
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#d20f39")).Render("[]")
+	case "moderator":
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#40a02b")).Render("[󰓥]")
+	case "vip":
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#ea76cb")).Render("[󰮊]")
+	}
+	return ""
 }
 
 func FormatChatMessage(message types.ChatMessage, width int) string {
-	icon := ""
-	modIcon := iconColorizer("#40a02b").Render("[󰓥]")
-	vipIcon := iconColorizer("#ea76cb").Render("[󰮊]")
-	if message.IsMod {
-		icon = modIcon
-	} else if message.IsVIP {
-		icon = vipIcon
-	}
+	icon := GenerateIcon(message.ChannelUserType)
 	color := message.Color
 	if color == "" {
 		color = "#7287fd"

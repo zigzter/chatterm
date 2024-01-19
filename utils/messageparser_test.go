@@ -10,14 +10,13 @@ import (
 func TestMessageParser(t *testing.T) {
 	got := MessageParser(RawChatMessage)
 	want := types.ChatMessage{
-		Color:          "#00F8FF",
-		DisplayName:    "gandalf",
-		IsFirstMessage: false,
-		IsMod:          true,
-		IsVIP:          false,
-		Message:        "All we have to decide is what to do with the time that is given to us.",
-		Timestamp:      "10:05",
-		UserId:         "20816785",
+		Color:           "#00F8FF",
+		DisplayName:     "gandalf",
+		IsFirstMessage:  false,
+		ChannelUserType: "moderator",
+		Message:         "All we have to decide is what to do with the time that is given to us.",
+		Timestamp:       "10:05",
+		UserId:          "20816785",
 	}
 	assert.Equal(t, got, want)
 }

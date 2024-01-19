@@ -28,14 +28,13 @@ type Message interface {
 }
 
 type ChatMessage struct {
-	Timestamp      string
-	Color          string
-	DisplayName    string
-	IsFirstMessage bool
-	IsMod          bool
-	IsVIP          bool
-	Message        string
-	UserId         string
+	Timestamp       string
+	Color           string
+	DisplayName     string
+	IsFirstMessage  bool
+	ChannelUserType string // "broadcaster" | "moderator" | "vip" | "normal"
+	Message         string
+	UserId          string
 }
 
 type SubMessage struct {
@@ -80,9 +79,8 @@ type UserListMessage struct {
 }
 
 type UserStateMessage struct {
-	Color         string
-	IsMod         bool
-	IsBroadcaster bool
+	Color           string
+	ChannelUserType string // "broadcaster" | "moderator" | "vip" | "normal"
 }
 
 // When Twitch sends a new ROOMSTATE message, it will omit all settings that weren't changed,

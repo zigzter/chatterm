@@ -19,17 +19,23 @@ func UserStateParser(input string) types.UserStateMessage {
 			switch key {
 			case "color":
 				userState.Color = value
-			case "mod":
-				userState.IsMod = value == "1"
 			case "badges":
+				// IRC message does have "mod" & "vip" fields, but it does not contain a broadcaster field,
+				// so we're just doing it all within badges
 				badges := strings.Split(value, ",")
-				isBroadcaster := false
+				channelUserType := "normal"
 				for _, badge := range badges {
-					if strings.HasPrefix(badge, "broadcaster") && strings.HasSuffix(value, "/1") {
-						isBroadcaster = true
+					if strings.HasPrefix(badge, "broadcaster") && strings.HasSuffix(badge, "/1") {
+						channelUserType = "broadcaster"
+					}
+					if strings.HasPrefix(badge, "moderator") && strings.HasSuffix(badge, "/1") {
+						channelUserType = "moderator"
+					}
+					if strings.HasPrefix(badge, "vip") && strings.HasSuffix(badge, "/1") {
+						channelUserType = "vip"
 					}
 				}
-				userState.IsBroadcaster = isBroadcaster
+				userState.ChannelUserType = channelUserType
 			}
 		}
 	}

@@ -85,9 +85,11 @@ func EstablishWSConnection(client *WebSocketClient, channel string, username str
 				// Initial join ROOMSTATE message seems to be appended to the USERSTATE message
 				stateMessages := strings.Split(rawIrcMessage, "\n")
 				userStateMessage := UserStateParser(stateMessages[0])
-				roomStateMessage := RoomStateParser(stateMessages[1])
+				if len(stateMessages) > 1 {
+					roomStateMessage := RoomStateParser(stateMessages[1])
+					msgChan <- types.ParsedIRCMessage{Msg: roomStateMessage}
+				}
 				msgChan <- types.ParsedIRCMessage{Msg: userStateMessage}
-				msgChan <- types.ParsedIRCMessage{Msg: roomStateMessage}
 			case roomStateRegex.MatchString(rawIrcMessage):
 				// We're keeping this in addition to the above parser,
 				// since room updates like turning slow mode on will trigger this

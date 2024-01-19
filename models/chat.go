@@ -3,7 +3,9 @@ package models
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -37,8 +39,9 @@ type ChatModel struct {
 	infoview         viewport.Model
 	shouldRenderInfo bool
 	messages         []types.ChatMessage
-	isMod            bool
-	isBroadcaster    bool
+	username         string
+	color            string
+	channelUserType  string
 	chatSettings     ChatSettings
 }
 
@@ -49,8 +52,8 @@ func InitialChatModel(width int, height int) ChatModel {
 	ip.SetContent("")
 	utils.InitConfig()
 	username := viper.GetString("username")
-	isMod := viper.GetBool("is-mod")
-	isBroadcaster := viper.GetBool("is-broadcaster")
+	color := viper.GetString("color")
+	channelUserType := viper.GetString("channel-user-type")
 	oauth := fmt.Sprintf("oauth:%s", viper.GetString("token"))
 	channel := viper.GetString("channel")
 	msgChan := make(chan types.ParsedIRCMessage, 100)
@@ -62,8 +65,6 @@ func InitialChatModel(width int, height int) ChatModel {
 	ti := textinput.New()
 	ti.CharLimit = 256
 	ti.Placeholder = "Send a message"
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	ti.Focus()
 	return ChatModel{
 		input:            "",
@@ -78,8 +79,9 @@ func InitialChatModel(width int, height int) ChatModel {
 		infoview:         ip,
 		shouldRenderInfo: false,
 		messages:         make([]types.ChatMessage, 0),
-		isMod:            isMod,
-		isBroadcaster:    isBroadcaster,
+		username:         username,
+		color:            color,
+		channelUserType:  channelUserType,
 		chatSettings: ChatSettings{
 			Slow: "0",
 		},
@@ -209,7 +211,9 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.chatContent += feedback
 				}
 			} else {
-				m.chatContent += fmt.Sprintf("You: %s\n", message)
+				nameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(m.color))
+				time := utils.ParseTimestamp(strconv.FormatInt(time.Now().Unix(), 10))
+				m.chatContent += fmt.Sprintf("[%s]%s: %s\n", time, nameStyle.Render(m.username), message)
 				m.WsClient.SendMessage([]byte("PRIVMSG #" + m.channel + " :" + message))
 			}
 			m.viewport.SetContent(m.chatContent)
@@ -255,12 +259,10 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ac.Populate(msg.Users)
 		case types.UserStateMessage:
 			utils.SaveConfig(map[string]interface{}{
-				"color":          msg.Color,
-				"is-mod":         msg.IsMod,
-				"is-broadcaster": msg.IsBroadcaster,
+				"color":             msg.Color,
+				"channel-user-type": msg.ChannelUserType,
 			})
-			m.isBroadcaster = msg.IsBroadcaster
-			m.isMod = msg.IsMod
+			m.channelUserType = msg.ChannelUserType
 		case *types.RoomStateMessage:
 			if msg.ChannelID != nil {
 				utils.SaveConfig(map[string]interface{}{
@@ -299,11 +301,11 @@ func iconColorizer(color string) lipgloss.Style {
 
 func (m ChatModel) View() string {
 	var viewportStyle = lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder()).
+		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("#8839ef")).
 		Width(m.viewport.Width)
 	var infoStyle = lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder()).
+		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("#8839ef")).
 		Width(m.infoview.Width)
 	var b strings.Builder
@@ -319,14 +321,7 @@ func (m ChatModel) View() string {
 		infoCloseMessage = ""
 		b.WriteString(viewportStyle.Render(m.viewport.View()) + "\n")
 	}
-	icon := ""
-	modIcon := iconColorizer("#40a02b").Render("[󰓥]")
-	broadcasterIcon := iconColorizer("#ea76cb").Render("[]")
-	if m.isMod {
-		icon = modIcon
-	} else if m.isBroadcaster {
-		icon = broadcasterIcon
-	}
+	icon := utils.GenerateIcon(m.channelUserType)
 	chatSettingsString := ""
 	if m.chatSettings.SubOnly {
 		chatSettingsString += "[Sub Only]"
