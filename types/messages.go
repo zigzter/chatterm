@@ -85,13 +85,15 @@ type UserStateMessage struct {
 	IsBroadcaster bool
 }
 
+// When Twitch sends a new ROOMSTATE message, it will omit all settings that weren't changed,
+// so we're using pointers here to be able to check for nil, which means it was not updated.
 type RoomStateMessage struct {
-	ChannelID     string
-	EmoteOnly     bool
-	FollowersOnly bool
-	SubsOnly      bool
-	UniqueOnly    bool // Whether subsequent messages must be unique
-	Slow          int  // Amount of seconds users must wait to send new messages
+	ChannelID     *string
+	EmoteOnly     *bool
+	FollowersOnly *bool
+	SubOnly       *bool
+	UniqueOnly    *bool   // Whether subsequent messages must be unique
+	Slow          *string // Amount of seconds users must wait to send new messages
 }
 
 func (cm ChatMessage) Implements() {}

@@ -16,6 +16,13 @@ import (
 	"github.com/zigzter/chatterm/utils"
 )
 
+type ChatSettings struct {
+	EmoteOnly     bool
+	FollowersOnly bool
+	SubOnly       bool
+	Slow          string
+}
+
 type ChatModel struct {
 	msgChan          chan types.ParsedIRCMessage
 	chatContent      string
@@ -32,6 +39,7 @@ type ChatModel struct {
 	messages         []types.ChatMessage
 	isMod            bool
 	isBroadcaster    bool
+	chatSettings     ChatSettings
 }
 
 func InitialChatModel(width int, height int) ChatModel {
@@ -72,6 +80,9 @@ func InitialChatModel(width int, height int) ChatModel {
 		messages:         make([]types.ChatMessage, 0),
 		isMod:            isMod,
 		isBroadcaster:    isBroadcaster,
+		chatSettings: ChatSettings{
+			Slow: "0",
+		},
 	}
 }
 
@@ -161,7 +172,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							followingText = "Following since: " + following.FollowedAt
 						}
 						feedback := fmt.Sprintf(
-							"User: %s.\nAccount created: %s.\n%s\n",
+							"User: %s\nAccount created: %s\n%s\n",
 							details.DisplayName,
 							details.CreatedAt,
 							followingText,
@@ -239,10 +250,24 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			})
 			m.isBroadcaster = msg.IsBroadcaster
 			m.isMod = msg.IsMod
-		case types.RoomStateMessage:
-			utils.SaveConfig(map[string]interface{}{
-				"channel-id": msg.ChannelID,
-			})
+		case *types.RoomStateMessage:
+			if msg.ChannelID != nil {
+				utils.SaveConfig(map[string]interface{}{
+					"channel-id": *msg.ChannelID,
+				})
+			}
+			if msg.EmoteOnly != nil {
+				m.chatSettings.EmoteOnly = *msg.EmoteOnly
+			}
+			if msg.FollowersOnly != nil {
+				m.chatSettings.FollowersOnly = *msg.FollowersOnly
+			}
+			if msg.SubOnly != nil {
+				m.chatSettings.SubOnly = *msg.SubOnly
+			}
+			if msg.Slow != nil {
+				m.chatSettings.Slow = *msg.Slow
+			}
 		}
 		m.viewport.SetContent(m.chatContent)
 		m.viewport.GotoBottom()
@@ -262,14 +287,6 @@ func iconColorizer(color string) lipgloss.Style {
 }
 
 func (m ChatModel) View() string {
-	icon := ""
-	modIcon := iconColorizer("#40a02b").Render("[󰓥]")
-	broadcasterIcon := iconColorizer("#ea76cb").Render("[]")
-	if m.isMod {
-		icon = modIcon
-	} else if m.isBroadcaster {
-		icon = broadcasterIcon
-	}
 	var viewportStyle = lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder()).
 		BorderForeground(lipgloss.Color("#8839ef")).
@@ -291,7 +308,28 @@ func (m ChatModel) View() string {
 		infoCloseMessage = ""
 		b.WriteString(viewportStyle.Render(m.viewport.View()) + "\n")
 	}
-	b.WriteString(icon + m.textinput.View() + "\n")
+	icon := ""
+	modIcon := iconColorizer("#40a02b").Render("[󰓥]")
+	broadcasterIcon := iconColorizer("#ea76cb").Render("[]")
+	if m.isMod {
+		icon = modIcon
+	} else if m.isBroadcaster {
+		icon = broadcasterIcon
+	}
+	chatSettingsString := ""
+	if m.chatSettings.SubOnly {
+		chatSettingsString += "[Sub Only]"
+	}
+	if m.chatSettings.EmoteOnly {
+		chatSettingsString += "[Emote Only]"
+	}
+	if m.chatSettings.FollowersOnly {
+		chatSettingsString += "[Followers Only]"
+	}
+	if m.chatSettings.Slow != "0" && m.chatSettings.Slow != "" {
+		chatSettingsString += fmt.Sprintf("[Slow Mode: %ss]", m.chatSettings.Slow)
+	}
+	b.WriteString(chatSettingsString + icon + m.textinput.View() + "\n")
 	b.WriteString(helpStyle.Render("[Esc]: return to channel selection - [Ctrl+c]: quit - [tab]: autocomplete" + infoCloseMessage))
 	return b.String()
 }

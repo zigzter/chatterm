@@ -6,7 +6,7 @@ import (
 	"github.com/zigzter/chatterm/types"
 )
 
-func RoomStateParser(input string) types.RoomStateMessage {
+func RoomStateParser(input string) *types.RoomStateMessage {
 	roomState := types.RoomStateMessage{}
 	parts := strings.SplitN(input, ":", 2)
 	metadata := parts[0]
@@ -14,22 +14,27 @@ func RoomStateParser(input string) types.RoomStateMessage {
 	for _, kvPair := range keyValPairs {
 		kv := strings.Split(kvPair, "=")
 		if len(kv) == 2 {
-			key := kv[0]
+			key := strings.TrimPrefix(kv[0], "@")
 			value := strings.TrimSpace(kv[1])
 			switch key {
 			case "room-id":
-				roomState.ChannelID = value
+				roomState.ChannelID = &value
 			case "emote-only":
-				roomState.EmoteOnly = value == "1"
+				enabled := value == "1"
+				roomState.EmoteOnly = &enabled
 			case "followers-only":
-				roomState.FollowersOnly = value == "1"
+				enabled := value != "-1"
+				roomState.FollowersOnly = &enabled
 			case "r9k":
-				roomState.UniqueOnly = value == "1"
+				enabled := value == "1"
+				roomState.UniqueOnly = &enabled
 			case "subs-only":
-				roomState.SubsOnly = value == "1"
+				enabled := value == "1"
+				roomState.SubOnly = &enabled
 			case "slow":
+				roomState.Slow = &value
 			}
 		}
 	}
-	return roomState
+	return &roomState
 }
