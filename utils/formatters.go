@@ -24,7 +24,7 @@ type BoxWithLabel struct {
 
 func NewBoxWithLabel(color string) BoxWithLabel {
 	return BoxWithLabel{
-		BoxStyle:   lipgloss.NewStyle().Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color(color)).Padding(0),
+		BoxStyle:   lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color(color)).Padding(0),
 		LabelStyle: lipgloss.NewStyle().Padding(0),
 	}
 }

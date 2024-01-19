@@ -315,11 +315,11 @@ func (m ChatModel) View() string {
 		b.WriteString(lipgloss.JoinHorizontal(
 			0,
 			m.labelBox.SetWidth(m.viewport.Width).Render(m.channel, m.viewport.View()),
-			m.labelBox.SetWidth(m.infoview.Width).Render("User info", m.infoview.View())) + "\n",
+			m.labelBox.SetWidth(m.infoview.Width).Render("User info", m.infoview.View())),
 		)
 	} else {
 		infoCloseMessage = ""
-		b.WriteString(m.labelBox.SetWidth(m.viewport.Width).Render(m.channel, m.viewport.View()) + "\n")
+		b.WriteString(m.labelBox.SetWidth(m.viewport.Width).Render(m.channel, m.viewport.View()))
 	}
 	icon := utils.GenerateIcon(m.channelUserType)
 	chatSettingsString := ""
