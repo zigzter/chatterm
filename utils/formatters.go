@@ -60,6 +60,8 @@ func GenerateIcon(userType string) string {
 		return lipgloss.NewStyle().Foreground(lipgloss.Color("#40a02b")).Render("[󰓥]")
 	case "vip":
 		return lipgloss.NewStyle().Foreground(lipgloss.Color("#ea76cb")).Render("[󰮊]")
+	case "staff":
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#8839ef")).Render("[󰖷]")
 	}
 	return ""
 }
