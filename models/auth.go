@@ -85,7 +85,7 @@ func (m AuthModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					listenForExternalMsgs(m.externalMsgs),
 				)
 			}
-		case "c":
+		case "ctrl+i":
 			return ChangeView(m, ChannelInputState)
 		}
 	case types.ServerStartedMsg:
@@ -144,7 +144,7 @@ func (m AuthModel) View() string {
 		fmt.Fprintln(&b, "Processing auth token...", m.spinner.View())
 	} else if m.tokenReceived {
 		fmt.Fprintln(&b, "Processing auth token...", check)
-		fmt.Fprintln(&b, "Authentication complete! Press [c] to return to channel selection")
+		fmt.Fprintln(&b, "Authentication complete! Press [Ctrl+i] to return to channel selection")
 	}
 	return b.String()
 }
