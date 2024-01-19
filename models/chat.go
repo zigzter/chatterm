@@ -121,6 +121,16 @@ func listenToWebSocket(msgChan <-chan types.ParsedIRCMessage) tea.Cmd {
 	}
 }
 
+func (m *ChatModel) WrapMessages() {
+	newlyWrappedChat := ""
+	for _, chat := range m.messages {
+		newlyWrappedChat += utils.FormatChatMessage(chat, m.viewport.Width)
+	}
+	m.chatContent = newlyWrappedChat
+	m.viewport.SetContent(m.chatContent)
+	m.viewport.GotoBottom()
+}
+
 func (m ChatModel) Init() tea.Cmd {
 	return listenToWebSocket(m.msgChan)
 }
@@ -135,6 +145,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlX:
 			m.shouldRenderInfo = false
 			m.viewport.Width = m.width - 2
+			m.WrapMessages()
 		case tea.KeyEsc:
 			m.WsClient.Conn.Close()
 			return ChangeView(m, ChannelInputState)
@@ -187,6 +198,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								)
 							}
 						}
+						m.WrapMessages()
 						m.textinput.Reset()
 						m.infoview.SetContent(feedback)
 						return m, listenToWebSocket(m.msgChan)
@@ -217,14 +229,13 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.viewport.Height = msg.Height - 5
 		m.infoview.Height = msg.Height - 5
-		// TODO: support re-wrapping older messages to fit new size
 		var vpCmd tea.Cmd
 		var ipCmd tea.Cmd
 		m.viewport, vpCmd = m.viewport.Update(msg)
 		m.infoview, ipCmd = m.infoview.Update(msg)
 		return m, tea.Batch(listenToWebSocket(m.msgChan), vpCmd, ipCmd)
 	case types.ParsedIRCMessage:
-		width := m.viewport.Width - 2
+		width := m.viewport.Width - 4
 		switch msg := msg.Msg.(type) {
 		case types.ChatMessage:
 			m.messages = append(m.messages, msg)
