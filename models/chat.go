@@ -184,22 +184,27 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						if following.FollowedAt != "" {
 							followingText = "Following since: " + following.FollowedAt
 						}
+						// TODO: instead of getting icon from messages and replacing,
+						// get it from the API, along with username color
 						feedback := fmt.Sprintf(
-							"User: %s\nAccount created: %s\n%s\n",
+							"User: {icon}%s\nAccount created: %s\n%s\n",
 							details.DisplayName,
 							details.CreatedAt,
 							followingText,
 						)
+						icon := ""
 						for _, chatMsg := range m.messages {
 							if chatMsg.DisplayName == args[0] {
 								// TODO: move this out of the loop
 								nameColor := lipgloss.NewStyle().Foreground(lipgloss.Color(chatMsg.Color))
+								icon = utils.GenerateIcon(chatMsg.ChannelUserType)
 								feedback += wordwrap.String(
 									fmt.Sprintf("%s: %s\n", nameColor.Render(chatMsg.DisplayName), chatMsg.Message),
 									m.infoview.Width,
 								)
 							}
 						}
+						feedback = strings.Replace(feedback, "{icon}", icon, 1)
 						m.WrapMessages()
 						m.textinput.Reset()
 						m.infoview.SetContent(feedback)
