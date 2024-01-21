@@ -21,6 +21,9 @@ Twitch chat in the terminal, with moderator actions.
 - SQLite for storage
 - Viper for configuration
 
+### Supported Platforms
+Currently only tested on Linux. macOS might work if you build it yourself.
+
 ### Installation
 
 Cloning option (requires Go):
