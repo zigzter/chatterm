@@ -68,10 +68,10 @@ func (m AuthModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c":
+		switch msg.Type {
+		case tea.KeyCtrlC:
 			return m, tea.Quit
-		case "enter":
+		case tea.KeyEnter:
 			if isValidUsernameLength(m.input) {
 				username := m.input.Value()
 				utils.SaveConfig(map[string]interface{}{
@@ -85,7 +85,7 @@ func (m AuthModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					listenForExternalMsgs(m.externalMsgs),
 				)
 			}
-		case "ctrl+i":
+		case tea.KeyCtrlI:
 			return ChangeView(m, ChannelInputState)
 		}
 	case types.ServerStartedMsg:
