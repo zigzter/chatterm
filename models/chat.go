@@ -25,6 +25,12 @@ type ChatSettings struct {
 	Slow          string
 }
 
+type currentUser struct {
+	username        string
+	color           string
+	channelUserType string
+}
+
 type ChatModel struct {
 	msgChan          chan types.ParsedIRCMessage
 	chatContent      string
@@ -39,11 +45,9 @@ type ChatModel struct {
 	infoview         viewport.Model
 	shouldRenderInfo bool
 	messages         []types.ChatMessage
-	username         string
-	color            string
-	channelUserType  string
 	chatSettings     ChatSettings
 	labelBox         utils.BoxWithLabel
+	currentUser      currentUser
 }
 
 func InitialChatModel(width int, height int) ChatModel {
@@ -81,10 +85,12 @@ func InitialChatModel(width int, height int) ChatModel {
 		infoview:         ip,
 		shouldRenderInfo: false,
 		messages:         make([]types.ChatMessage, 0),
-		username:         username,
-		color:            color,
-		channelUserType:  channelUserType,
 		labelBox:         labelBox,
+		currentUser: currentUser{
+			username:        username,
+			color:           color,
+			channelUserType: channelUserType,
+		},
 		chatSettings: ChatSettings{
 			Slow: "0",
 		},
@@ -219,9 +225,10 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.chatContent += feedback
 				}
 			} else {
-				nameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(m.color))
+				nameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(m.currentUser.color))
 				time := utils.ParseTimestamp(strconv.FormatInt(time.Now().Unix(), 10))
-				m.chatContent += fmt.Sprintf("[%s]%s: %s\n", time, nameStyle.Render(m.username), message)
+				icon := utils.GenerateIcon(m.currentUser.channelUserType)
+				m.chatContent += fmt.Sprintf("[%s]%s%s: %s\n", time, icon, nameStyle.Render(m.currentUser.username), message)
 				m.WsClient.SendMessage([]byte("PRIVMSG #" + m.channel + " :" + message))
 			}
 			m.viewport.SetContent(m.chatContent)
@@ -270,7 +277,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				"color":             msg.Color,
 				"channel-user-type": msg.ChannelUserType,
 			})
-			m.channelUserType = msg.ChannelUserType
+			m.currentUser.channelUserType = msg.ChannelUserType
 		case *types.RoomStateMessage:
 			if msg.ChannelID != nil {
 				utils.SaveConfig(map[string]interface{}{
@@ -321,7 +328,7 @@ func (m ChatModel) View() string {
 		infoCloseMessage = ""
 		b.WriteString(m.labelBox.SetWidth(m.viewport.Width).Render(m.channel, m.viewport.View()))
 	}
-	icon := utils.GenerateIcon(m.channelUserType)
+	icon := utils.GenerateIcon(m.currentUser.channelUserType)
 	chatSettingsString := "\n"
 	if m.chatSettings.SubOnly {
 		chatSettingsString += "[Sub Only]"
