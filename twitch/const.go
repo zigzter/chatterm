@@ -28,6 +28,14 @@ var RequestMap = map[types.TwitchCommand]CommandDetails{
 		Endpoint: "/chat/settings",
 		Method:   "PATCH",
 	},
+	types.FollowersOnly: {
+		Endpoint: "/chat/settings",
+		Method:   "PATCH",
+	},
+	types.EmoteOnly: {
+		Endpoint: "/chat/settings",
+		Method:   "PATCH",
+	},
 	types.Delete: {
 		Endpoint: "/moderation/chat",
 		Method:   "DELETE",
@@ -44,7 +52,7 @@ var RequestMap = map[types.TwitchCommand]CommandDetails{
 		Endpoint: "/subscriptions/user",
 		Method:   "GET",
 	},
-	types.Followers: {
+	types.GetFollowers: {
 		Endpoint: "/channels/followers",
 		Method:   "GET",
 	},

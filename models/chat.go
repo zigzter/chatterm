@@ -172,9 +172,11 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			isCommand, command, args := processChatInput(message)
 			if isCommand {
 				var feedback string
-				res, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
+				// res, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
+				res, err := twitch.SendTwitchCommand("alskdfj", args)
 				if err != nil {
-					feedback = err.Error()
+					feedback = err.Error() + "\n"
+					m.chatContent += feedback
 				} else {
 					switch resp := res.(type) {
 					case *types.UserBanResp:
@@ -184,7 +186,10 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						} else {
 							feedback = fmt.Sprintf("You timed out %s until %s\n", args[0], data.EndTime)
 						}
+					case *types.UpdateChatSettingsData:
+						feedback = fmt.Sprintf("Updated %s chat setting.\n", command)
 					case *types.UserInfo:
+						// TODO: Make the info stack vertically if width too small
 						m.shouldRenderInfo = true
 						m.viewport.Width = (m.width / 2) - 2
 						details := resp.Details

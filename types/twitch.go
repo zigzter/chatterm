@@ -18,17 +18,19 @@ type (
 type TwitchCommand string
 
 const (
-	Ban          TwitchCommand = "ban"
-	Info         TwitchCommand = "info"
-	Unban        TwitchCommand = "unban"
-	Clear        TwitchCommand = "clear"
-	Delete       TwitchCommand = "delete"
-	Slow         TwitchCommand = "slow"
-	SubOnly      TwitchCommand = "subonly"
-	User         TwitchCommand = "user"
-	Subscription TwitchCommand = "subscription"
-	Followers    TwitchCommand = "followers"
-	LiveChannels TwitchCommand = "livechannels"
+	Ban           TwitchCommand = "ban"
+	Info          TwitchCommand = "info"
+	Unban         TwitchCommand = "unban"
+	Clear         TwitchCommand = "clear"
+	Delete        TwitchCommand = "delete"
+	Slow          TwitchCommand = "slow"
+	SubOnly       TwitchCommand = "subonly"
+	EmoteOnly     TwitchCommand = "emoteonly"
+	FollowersOnly TwitchCommand = "followers"
+	User          TwitchCommand = "user"
+	Subscription  TwitchCommand = "subscription"
+	GetFollowers  TwitchCommand = "getfollowers"
+	LiveChannels  TwitchCommand = "livechannels"
 )
 
 type TwitchAPIError struct {
@@ -122,18 +124,20 @@ type UserBanResp struct {
 	} `json:"data"`
 }
 
+type UpdateChatSettingsData struct {
+	ChannelID                     string `json:"broadcaster_id"`
+	ModeratorID                   string `json:"moderator_id"`
+	SlowMode                      bool   `json:"slow_mode"`
+	SlowModeWaitTime              int    `json:"slow_mode_wait_time"`
+	FollowerMode                  bool   `json:"follower_mode"`
+	FollowerModeDuration          any    `json:"follower_mode_duration"`
+	SubscriberMode                bool   `json:"subscriber_mode"`
+	EmoteMode                     bool   `json:"emote_mode"`
+	UniqueChatMode                bool   `json:"unique_chat_mode"`
+	NonModeratorChatDelay         bool   `json:"non_moderator_chat_delay"`
+	NonModeratorChatDelayDuration any    `json:"non_moderator_chat_delay_duration"`
+}
+
 type UpdateChatSettingsResp struct {
-	Data []struct {
-		ChannelID                     string `json:"broadcaster_id"`
-		ModeratorID                   string `json:"moderator_id"`
-		SlowMode                      bool   `json:"slow_mode"`
-		SlowModeWaitTime              int    `json:"slow_mode_wait_time"`
-		FollowerMode                  bool   `json:"follower_mode"`
-		FollowerModeDuration          any    `json:"follower_mode_duration"`
-		SubscriberMode                bool   `json:"subscriber_mode"`
-		EmoteMode                     bool   `json:"emote_mode"`
-		UniqueChatMode                bool   `json:"unique_chat_mode"`
-		NonModeratorChatDelay         bool   `json:"non_moderator_chat_delay"`
-		NonModeratorChatDelayDuration any    `json:"non_moderator_chat_delay_duration"`
-	} `json:"data"`
+	Data []UpdateChatSettingsData `json:"data"`
 }

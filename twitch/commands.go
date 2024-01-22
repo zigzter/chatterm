@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -67,7 +69,8 @@ func fireRequest(req *http.Request) ([]byte, error) {
 
 func isValidCommand(command string) bool {
 	switch types.TwitchCommand(command) {
-	case types.Ban, types.Clear, types.Unban, types.Delete, types.Info:
+	case types.Ban, types.Clear, types.Unban, types.Delete, types.Info,
+		types.FollowersOnly, types.SubOnly, types.Slow, types.EmoteOnly:
 		return true
 	}
 	return false
@@ -90,8 +93,57 @@ func SendTwitchCommand(command types.TwitchCommand, args []string) (interface{},
 		return sendClearRequest()
 	case types.Delete:
 		return sendDeleteRequest(args)
+	case types.Slow, types.SubOnly, types.FollowersOnly:
+		var duration string
+		if len(args) > 0 {
+			duration = args[0]
+		}
+		return sendUpdateChatRequest(command, duration)
 	}
 	return nil, fmt.Errorf("Unknown command: %s", command)
+}
+
+func sendUpdateChatRequest(mode types.TwitchCommand, duration string) (*types.UpdateChatSettingsData, error) {
+	bodyData := make(map[string]interface{})
+	shouldEnable := duration != "off"
+	intDuration, _ := strconv.Atoi(duration)
+	switch mode {
+	case types.EmoteOnly:
+		bodyData["emote_only"] = shouldEnable
+	case types.FollowersOnly:
+		bodyData["follower_mode"] = shouldEnable
+		if intDuration > 0 {
+			bodyData["follower_mode_duration"] = intDuration
+		}
+	case types.SubOnly:
+		bodyData["subscriber_mode"] = shouldEnable
+	case types.Slow:
+		bodyData["slow_mod"] = shouldEnable
+		if intDuration > 0 {
+			bodyData["follower_mode_duration"] = intDuration
+		}
+	default:
+		return nil, errors.New("Invalid chat setting")
+	}
+	cmdDetails := RequestMap[types.TwitchCommand(mode)]
+	url := rootUrl + cmdDetails.Endpoint
+	requestBody, err := json.Marshal(map[string]interface{}{
+		"data": bodyData,
+	})
+	req, err := http.NewRequest(cmdDetails.Method, url, bytes.NewBuffer(requestBody))
+	req.Header.Set("Content-Type", "application/json")
+	if err != nil {
+		return nil, err
+	}
+	req = augmentRequest(req)
+	log.Println(req.URL.String())
+	bytes, err := fireRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	var updateChatSettingsData types.UpdateChatSettingsData
+	json.Unmarshal(bytes, &updateChatSettingsData)
+	return &updateChatSettingsData, nil
 }
 
 func SendUserRequest(username string) (*types.UserResp, error) {
@@ -115,7 +167,7 @@ func SendUserRequest(username string) (*types.UserResp, error) {
 }
 
 func sendFollowersRequest(args []string) (*types.FollowersResp, error) {
-	cmdDetails := RequestMap[types.Followers]
+	cmdDetails := RequestMap[types.GetFollowers]
 	url := rootUrl + cmdDetails.Endpoint
 	req, err := http.NewRequest(cmdDetails.Method, url, nil)
 	req = augmentRequest(req)

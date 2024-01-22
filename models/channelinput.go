@@ -60,7 +60,7 @@ func fetchLiveStreams(m *ChannelInputModel) {
 		} else {
 			userID = userData.Data[0].ID
 			utils.SaveConfig(map[string]interface{}{
-				"userid": userID,
+				"user-id": userID,
 			})
 		}
 	}

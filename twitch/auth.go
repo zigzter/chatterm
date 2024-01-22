@@ -56,6 +56,7 @@ func PromptTwitchAuth() tea.Cmd {
 			"channel:moderate",
 			"moderator:manage:chat_messages",
 			"moderator:manage:banned_users",
+			"moderator:manage:chat_settings",
 			"moderator:read:followers",
 		}
 		redirectUrl := serverAddr
