@@ -44,8 +44,16 @@ func (client *WebSocketClient) SendMessage(message []byte) error {
 
 // EstablishWSConnection sends the authentication information to Twitch,
 // then listens for and processes incoming IRC messages
-func EstablishWSConnection(client *WebSocketClient, channel string, username string, oath string, msgChan chan<- types.ParsedIRCMessage) {
-	err1 := client.SendMessage([]byte("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands"))
+func EstablishWSConnection(
+	client *WebSocketClient,
+	channel string,
+	username string,
+	oath string,
+	msgChan chan<- types.ParsedIRCMessage,
+) {
+	err1 := client.SendMessage(
+		[]byte("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands"),
+	)
 	if err1 != nil {
 		log.Println("Error writing message:", err1)
 	}

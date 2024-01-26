@@ -172,8 +172,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			isCommand, command, args := processChatInput(message)
 			if isCommand {
 				var feedback string
-				// res, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
-				res, err := twitch.SendTwitchCommand("alskdfj", args)
+				res, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
 				if err != nil {
 					feedback = err.Error() + "\n"
 					m.chatContent += feedback
@@ -184,7 +183,11 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						if data.EndTime == nil {
 							feedback = fmt.Sprintf("You banned %s from the chat.\n", args[0])
 						} else {
-							feedback = fmt.Sprintf("You timed out %s until %s\n", args[0], data.EndTime)
+							feedback = fmt.Sprintf(
+								"You timed out %s until %s\n",
+								args[0],
+								data.EndTime,
+							)
 						}
 					case *types.UpdateChatSettingsData:
 						feedback = fmt.Sprintf("Updated %s chat setting.\n", command)
@@ -210,10 +213,15 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						for _, chatMsg := range m.messages {
 							if chatMsg.DisplayName == args[0] {
 								// TODO: move this out of the loop
-								nameColor := lipgloss.NewStyle().Foreground(lipgloss.Color(chatMsg.Color))
+								nameColor := lipgloss.NewStyle().
+									Foreground(lipgloss.Color(chatMsg.Color))
 								icon = utils.GenerateIcon(chatMsg.ChannelUserType)
 								feedback += wordwrap.String(
-									fmt.Sprintf("%s: %s\n", nameColor.Render(chatMsg.DisplayName), chatMsg.Message),
+									fmt.Sprintf(
+										"%s: %s\n",
+										nameColor.Render(chatMsg.DisplayName),
+										chatMsg.Message,
+									),
 									m.infoview.Width,
 								)
 							}
@@ -233,7 +241,13 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				nameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(m.currentUser.color))
 				time := utils.ParseTimestamp(strconv.FormatInt(time.Now().Unix(), 10))
 				icon := utils.GenerateIcon(m.currentUser.channelUserType)
-				m.chatContent += fmt.Sprintf("[%s]%s%s: %s\n", time, icon, nameStyle.Render(m.currentUser.username), message)
+				m.chatContent += fmt.Sprintf(
+					"[%s]%s%s:%s\n",
+					time,
+					icon,
+					nameStyle.Render(m.currentUser.username),
+					message,
+				)
 				m.WsClient.SendMessage([]byte("PRIVMSG #" + m.channel + " :" + message))
 			}
 			m.viewport.SetContent(m.chatContent)
@@ -331,7 +345,9 @@ func (m ChatModel) View() string {
 		)
 	} else {
 		infoCloseMessage = ""
-		b.WriteString(m.labelBox.SetWidth(m.viewport.Width).Render(m.channel, m.viewport.View()))
+		b.WriteString(m.labelBox.
+			SetWidth(m.viewport.Width).
+			Render(m.channel, m.viewport.View()))
 	}
 	icon := utils.GenerateIcon(m.currentUser.channelUserType)
 	chatSettingsString := "\n"

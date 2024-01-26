@@ -24,7 +24,10 @@ type BoxWithLabel struct {
 
 func NewBoxWithLabel(color string) BoxWithLabel {
 	return BoxWithLabel{
-		BoxStyle:   lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color(color)).Padding(0),
+		BoxStyle: lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color(color)).
+			Padding(0),
 		LabelStyle: lipgloss.NewStyle().Padding(0),
 	}
 }
@@ -36,11 +39,13 @@ func (b *BoxWithLabel) SetWidth(width int) *BoxWithLabel {
 
 func (b *BoxWithLabel) Render(label, content string) string {
 	var (
-		border          lipgloss.Border             = b.BoxStyle.GetBorderStyle()
-		topBorderStyler func(strs ...string) string = lipgloss.NewStyle().Foreground(b.BoxStyle.GetBorderTopForeground()).Render
-		topLeft         string                      = topBorderStyler(border.TopLeft)
-		topRight        string                      = topBorderStyler(border.TopRight)
-		renderedLabel   string                      = b.LabelStyle.Render(label)
+		topBorderStyler func(strs ...string) string = lipgloss.NewStyle().
+				Foreground(b.BoxStyle.GetBorderTopForeground()).
+				Render
+		border        lipgloss.Border = b.BoxStyle.GetBorderStyle()
+		topLeft       string          = topBorderStyler(border.TopLeft)
+		topRight      string          = topBorderStyler(border.TopRight)
+		renderedLabel string          = b.LabelStyle.Render(label)
 	)
 	width := lipgloss.Width(content)
 	if b.width != 0 {
