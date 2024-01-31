@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/paginator"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -23,6 +24,40 @@ var (
 	gameNameStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("12"))
 )
 
+type KeyMap struct {
+	Auth    key.Binding
+	Tab     key.Binding
+	Input   key.Binding
+	Refresh key.Binding
+	Esc     key.Binding
+	Close   key.Binding
+	Enter   key.Binding
+	Prev    key.Binding
+	Next    key.Binding
+}
+
+func (k KeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.Prev, k.Next}, {k.Input, k.Refresh}, {k.Auth, k.Close},
+	}
+}
+
+func (k KeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Tab, k.Enter, k.Esc, k.Close}
+}
+
+var keys = KeyMap{
+	Auth:    key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "open auth")),
+	Tab:     key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "autocomplete")),
+	Input:   key.NewBinding(key.WithKeys("i"), key.WithHelp("i", "open channel input")),
+	Refresh: key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh channels")),
+	Close:   key.NewBinding(key.WithKeys("ctrl+c"), key.WithHelp("ctrl+c", "close app")),
+	Esc:     key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "close channel input")),
+	Enter:   key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "join channel")),
+	Prev:    key.NewBinding(key.WithKeys("left", "h"), key.WithHelp("←/h", "previous page")),
+	Next:    key.NewBinding(key.WithKeys("right", "l"), key.WithHelp("→/l", "next page")),
+}
+
 type ChannelInputModel struct {
 	textinput         textinput.Model
 	authRequired      bool
@@ -33,22 +68,27 @@ type ChannelInputModel struct {
 	height            int
 	paginator         paginator.Model
 	streamsViewHeight int
+	inputVisible      bool
+	help              help.Model
 }
 
 func InitialChannelInputModel() ChannelInputModel {
 	model := ChannelInputModel{
-		width: 0,
+		width:        0,
+		inputVisible: false,
+		help:         help.New(),
 	}
+	model.help.ShowAll = true
 	model.ac = &utils.Trie{Root: utils.NewTrieNode()}
 	utils.InitConfig()
 	authRequired := utils.IsAuthRequired()
 	ti := textinput.New()
 	ti.Placeholder = "a_seagull"
+	ti.Blur()
 	configChannel := viper.GetString("channel")
 	if configChannel != "" {
 		ti.SetValue(configChannel)
 	}
-	ti.Focus()
 	p := paginator.New()
 	p.Type = paginator.Dots
 	p.PerPage = 10
@@ -58,9 +98,8 @@ func InitialChannelInputModel() ChannelInputModel {
 	p.InactiveDot = lipgloss.NewStyle().
 		Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).
 		Render("•")
-		// TODO: these ctrl binds don't work
-	p.KeyMap.NextPage = key.NewBinding(key.WithKeys("right", "ctrl+l"))
-	p.KeyMap.PrevPage = key.NewBinding(key.WithKeys("left", "ctrl+h"))
+	p.KeyMap.NextPage = keys.Next
+	p.KeyMap.PrevPage = keys.Prev
 	model.paginator = p
 	model.textinput = ti
 	model.authRequired = authRequired
@@ -106,26 +145,30 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
-			return m, tea.Quit
-			// TODO: re-enable config view
-			// case tea.KeyCtrlO:
-			// 	return ChangeView(m, ConfigState)
-		case tea.KeyCtrlR:
-			fetchLiveStreams(&m)
+		switch {
+		case key.Matches(msg, keys.Input):
+			m.inputVisible = true
+			m.textinput.Focus()
+			m.help.ShowAll = false
 			return m, nil
-		case tea.KeyCtrlA:
-			return ChangeView(m, AuthState)
-		case tea.KeyTab:
+		case key.Matches(msg, keys.Esc):
+			m.help.ShowAll = true
+			m.inputVisible = false
+			m.textinput.Blur()
+			return m, nil
+		case key.Matches(msg, keys.Tab):
 			input := m.textinput.Value()
 			suggestion := m.ac.UpdateSuggestion(input)
 			m.textinput.SetValue(suggestion)
 			m.textinput.CursorEnd()
-		case tea.KeyEnter:
-			if m.textinput.Value() == "exit" {
-				return m, tea.Quit
-			}
+		case key.Matches(msg, keys.Auth):
+			return ChangeView(m, AuthState)
+		case key.Matches(msg, keys.Refresh):
+			fetchLiveStreams(&m)
+			return m, nil
+		case key.Matches(msg, keys.Close):
+			return m, tea.Quit
+		case key.Matches(msg, keys.Enter):
 			utils.SaveConfig(map[string]interface{}{
 				"channel": m.textinput.Value(),
 			})
@@ -164,10 +207,12 @@ func (m ChannelInputModel) View() string {
 			b.WriteString(wrapped)
 		}
 		m.streamsViewHeight = totalHeight
-		b.WriteString("  " + m.paginator.View())
-		b.WriteString("\nEnter channel name:\n")
-		b.WriteString(m.textinput.View() + "\n")
+		b.WriteString("  " + m.paginator.View() + "\n")
+		if m.inputVisible {
+			b.WriteString("\nEnter channel name:\n")
+			b.WriteString(m.textinput.View() + "\n")
+		}
 	}
-	b.WriteString(helpStyle.Render("[Ctrl+c]: quit - [Ctrl+r]: reload streams - [Ctrl+u]: reset channel input"))
+	b.WriteString(m.help.View(keys))
 	return b.String()
 }
