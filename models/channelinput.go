@@ -26,6 +26,7 @@ var (
 
 type KeyMap struct {
 	Auth    key.Binding
+	Options key.Binding
 	Tab     key.Binding
 	Input   key.Binding
 	Refresh key.Binding
@@ -38,7 +39,7 @@ type KeyMap struct {
 
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Prev, k.Next}, {k.Input, k.Refresh}, {k.Auth, k.Close},
+		{k.Prev, k.Next}, {k.Input, k.Refresh}, {k.Auth, k.Close}, {k.Options},
 	}
 }
 
@@ -48,6 +49,7 @@ func (k KeyMap) ShortHelp() []key.Binding {
 
 var keys = KeyMap{
 	Auth:    key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "open auth")),
+	Options: key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "open options")),
 	Tab:     key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "autocomplete")),
 	Input:   key.NewBinding(key.WithKeys("i"), key.WithHelp("i", "open channel input")),
 	Refresh: key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh channels")),
@@ -161,6 +163,8 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			suggestion := m.ac.UpdateSuggestion(input)
 			m.textinput.SetValue(suggestion)
 			m.textinput.CursorEnd()
+		case key.Matches(msg, keys.Options):
+			return ChangeView(m, SettingsState)
 		case key.Matches(msg, keys.Auth):
 			return ChangeView(m, AuthState)
 		case key.Matches(msg, keys.Refresh):

@@ -18,6 +18,8 @@ import (
 	"github.com/zigzter/chatterm/utils"
 )
 
+var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Margin(1, 0)
+
 type ChatSettings struct {
 	EmoteOnly     bool
 	FollowersOnly bool

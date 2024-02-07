@@ -12,7 +12,7 @@ type ChangeStateMsg struct {
 
 const (
 	ChannelInputState AppState = iota
-	ConfigState
+	SettingsState
 	ChatState
 	AuthState
 )
@@ -21,7 +21,7 @@ type RootModel struct {
 	State             AppState
 	Chat              ChatModel
 	ChannelInput      ChannelInputModel
-	Config            ConfigModel
+	Settings          SettingsModel
 	Auth              AuthModel
 	IsChatInitialized bool
 	Width             int
@@ -30,12 +30,12 @@ type RootModel struct {
 
 func InitialRootModel() RootModel {
 	channelInputModel := InitialChannelInputModel()
-	configModel := InitialConfigModel()
+	settingsModel := InitialSettingsModel()
 	authModel := InitialAuthModel()
 	return RootModel{
 		State:             0,
 		ChannelInput:      channelInputModel,
-		Config:            configModel,
+		Settings:          settingsModel,
 		Auth:              authModel,
 		IsChatInitialized: false,
 	}
@@ -73,9 +73,9 @@ func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		newModel, newCmd := m.Chat.Update(msg)
 		m.Chat = newModel.(ChatModel)
 		cmd = newCmd
-	case ConfigState:
-		newModel, newCmd := m.Config.Update(msg)
-		m.Config = newModel.(ConfigModel)
+	case SettingsState:
+		newModel, newCmd := m.Settings.Update(msg)
+		m.Settings = newModel.(SettingsModel)
 		cmd = newCmd
 	case AuthState:
 		newModel, newCmd := m.Auth.Update(msg)
@@ -92,8 +92,8 @@ func (m RootModel) View() string {
 		return m.ChannelInput.View()
 	case ChatState:
 		return m.Chat.View()
-	case ConfigState:
-		return m.Config.View()
+	case SettingsState:
+		return m.Settings.View()
 	case AuthState:
 		return m.Auth.View()
 	default:
