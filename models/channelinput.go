@@ -100,8 +100,6 @@ func InitialChannelInputModel() ChannelInputModel {
 	p.InactiveDot = lipgloss.NewStyle().
 		Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).
 		Render("•")
-	p.KeyMap.NextPage = keys.Next
-	p.KeyMap.PrevPage = keys.Prev
 	model.paginator = p
 	model.textinput = ti
 	model.authRequired = authRequired
@@ -148,11 +146,22 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 	case tea.KeyMsg:
 		switch {
+		case key.Matches(msg, keys.Next):
+			// Manually firing these to be able to disable them when the input is enabled
+			if !m.inputVisible {
+				m.paginator.NextPage()
+			}
+		case key.Matches(msg, keys.Prev):
+			if !m.inputVisible {
+				m.paginator.PrevPage()
+			}
 		case key.Matches(msg, keys.Input):
-			m.inputVisible = true
-			m.textinput.Focus()
-			m.help.ShowAll = false
-			return m, nil
+			if !m.inputVisible {
+				m.inputVisible = true
+				m.textinput.Focus()
+				m.help.ShowAll = false
+				return m, nil
+			}
 		case key.Matches(msg, keys.Esc):
 			m.help.ShowAll = true
 			m.inputVisible = false
@@ -164,12 +173,18 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.textinput.SetValue(suggestion)
 			m.textinput.CursorEnd()
 		case key.Matches(msg, keys.Options):
-			return ChangeView(m, SettingsState)
+			if !m.inputVisible {
+				return ChangeView(m, SettingsState)
+			}
 		case key.Matches(msg, keys.Auth):
-			return ChangeView(m, AuthState)
+			if !m.inputVisible {
+				return ChangeView(m, AuthState)
+			}
 		case key.Matches(msg, keys.Refresh):
-			fetchLiveStreams(&m)
-			return m, nil
+			if !m.inputVisible {
+				fetchLiveStreams(&m)
+				return m, nil
+			}
 		case key.Matches(msg, keys.Close):
 			return m, tea.Quit
 		case key.Matches(msg, keys.Enter):
@@ -182,14 +197,16 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.authRequired = utils.IsAuthRequired()
 	var tiCmd, pCmd tea.Cmd
 	m.textinput, tiCmd = m.textinput.Update(msg)
-	m.paginator, pCmd = m.paginator.Update(msg)
+	if !m.inputVisible {
+		m.paginator, pCmd = m.paginator.Update(msg)
+	}
 	return m, tea.Batch(tiCmd, pCmd)
 }
 
 func (m ChannelInputModel) View() string {
 	var b strings.Builder
 	if m.authRequired {
-		b.WriteString("Authentication required. Press [Ctrl+a] to start.\n")
+		b.WriteString("Authentication required. Press [a] to start.\n")
 	} else {
 		b.WriteString("Live Channels:\n")
 		if m.error != "" {
