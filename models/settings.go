@@ -16,31 +16,49 @@ func isHexColor(input string) error {
 	return nil
 }
 
+var (
+	showBadges        bool
+	highlightSubs     bool
+	highlightRaids    bool
+	firstChatterColor string
+)
+
 func InitialSettingsModel() SettingsModel {
 	m := SettingsModel{}
-	var color string
 	m.form = huh.NewForm(
 		huh.NewGroup(
-			huh.NewSelect[string]().
+			huh.NewSelect[bool]().
 				Key("badges").
-				Options(huh.NewOptions("Show", "Hide")...).
+				Options(
+					huh.NewOption("Show", true),
+					huh.NewOption("Hide", false),
+				).
 				Title("Display badges").
-				Description("Choose whether mod/vip badges should be shown"),
-			huh.NewSelect[string]().
+				Description("Choose whether mod/vip badges should be shown").
+				Value(&showBadges),
+			huh.NewSelect[bool]().
 				Key("subs").
-				Options(huh.NewOptions("Show", "Hide")...).
+				Options(
+					huh.NewOption("Show", true),
+					huh.NewOption("Hide", false),
+				).
 				Title("Highlight subscriptions").
-				Description("Choose whether to highlight subscription messages"),
-			huh.NewSelect[string]().
+				Description("Choose whether to highlight subscription messages").
+				Value(&highlightSubs),
+			huh.NewSelect[bool]().
 				Key("raids").
-				Options(huh.NewOptions("Show", "Hide")...).
+				Options(
+					huh.NewOption("Show", true),
+					huh.NewOption("Hide", false),
+				).
 				Title("Highlight raids").
-				Description("Choose whether to highlight raid messages"),
+				Description("Choose whether to highlight raid messages").
+				Value(&highlightRaids),
 			huh.NewInput().
 				Title("First chatter color").
 				Prompt("#").
 				Validate(isHexColor).
-				Value(&color),
+				Value(&firstChatterColor),
 			huh.NewConfirm().
 				Key("save").
 				Title("Save Settings").
