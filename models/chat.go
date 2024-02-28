@@ -69,6 +69,7 @@ func InitialChatModel(width int, height int) ChatModel {
 		log.Fatal("Failed to initialize socket client")
 	}
 	go utils.EstablishWSConnection(wsClient, channel, username, oauth, msgChan)
+	utils.SetFormatterConfigValues()
 	ti := textinput.New()
 	ti.CharLimit = 256
 	ti.Placeholder = "Send a message"

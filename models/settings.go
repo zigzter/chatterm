@@ -18,6 +18,7 @@ func isHexColor(input string) error {
 
 var (
 	showBadges        bool   = true
+	showTimestamps    bool   = true
 	highlightSubs     bool   = true
 	highlightRaids    bool   = true
 	firstChatterColor string = "e64553"
@@ -28,22 +29,33 @@ type SettingsSaved struct{}
 func SaveSettings(shouldSave bool) {
 	if shouldSave {
 		utils.SaveConfig(map[string]interface{}{
-			"settings.showBadges":        showBadges,
-			"settings.highlightSubs":     highlightSubs,
-			"settings.highlightRaids":    highlightRaids,
-			"settings.firstChatterColor": firstChatterColor,
+			utils.ShowBadgesKey:        showBadges,
+			utils.ShowTimestampsKey:    showTimestamps,
+			utils.HighlightSubsKey:     highlightSubs,
+			utils.HighlightRaidsKey:    highlightRaids,
+			utils.FirstChatterColorKey: firstChatterColor,
 		})
 	}
 }
 
 func InitialSettingsModel() SettingsModel {
 	m := SettingsModel{}
-	showBadges = viper.GetBool("settings.showBadges")
-	highlightSubs = viper.GetBool("settings.highlightSubs")
-	highlightRaids = viper.GetBool("settings.highlightRaids")
-	firstChatterColor = viper.GetString("settings.firstChatterColor")
+	showBadges = viper.GetBool(utils.ShowBadgesKey)
+	showTimestamps = viper.GetBool(utils.ShowTimestampsKey)
+	highlightSubs = viper.GetBool(utils.HighlightSubsKey)
+	highlightRaids = viper.GetBool(utils.HighlightRaidsKey)
+	firstChatterColor = viper.GetString(utils.FirstChatterColorKey)
 	m.form = huh.NewForm(
 		huh.NewGroup(
+			huh.NewSelect[bool]().
+				Key("timestamps").
+				Options(
+					huh.NewOption("Show", true),
+					huh.NewOption("Hide", false),
+				).
+				Title("Display timestamps").
+				Description("Choose whether timestamps should be shown").
+				Value(&showTimestamps),
 			huh.NewSelect[bool]().
 				Key("badges").
 				Options(

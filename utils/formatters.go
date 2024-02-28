@@ -68,10 +68,20 @@ func usernameColorizer(color string) lipgloss.Style {
 }
 
 var (
-	showBadges     = viper.GetBool("settings.showbadges")
-	highlightSubs  = viper.GetBool("settings.highlightsubs")
-	highlightRaids = viper.GetBool("settings.highlightraids")
+	showBadges     bool
+	showTimestamps bool
+	highlightSubs  bool
+	highlightRaids bool
 )
+
+// SetFormatterConfigValues sets the formatter customization options from the config.
+// This is required because Viper won't have loaded the config yet when it reads this file.
+func SetFormatterConfigValues() {
+	showBadges = viper.GetBool(ShowBadgesKey)
+	showTimestamps = viper.GetBool(ShowTimestampsKey)
+	highlightSubs = viper.GetBool(HighlightRaidsKey)
+	highlightRaids = viper.GetBool(HighlightRaidsKey)
+}
 
 // GenerateIcon returns a colored user-type icon, if applicable to the user.
 // For example, a green sword icon for a moderator.
@@ -98,10 +108,14 @@ func FormatChatMessage(message types.ChatMessage, width int) string {
 	if color == "" {
 		color = "#7287fd"
 	}
+	timestamp := ""
+	if showTimestamps {
+		timestamp = "[" + message.Timestamp + "]"
+	}
 	box := NewBoxWithLabel(newMsgColor)
 	msg := fmt.Sprintf(
-		"[%s]%s%s: %s",
-		message.Timestamp,
+		"%s%s%s: %s",
+		timestamp,
 		icon,
 		usernameColorizer(color).Render(message.DisplayName),
 		message.Message,
