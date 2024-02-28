@@ -53,9 +53,9 @@ type ChatModel struct {
 }
 
 func InitialChatModel(width int, height int) ChatModel {
-	vp := viewport.New(width-2, height-5)
+	vp := viewport.New(width-2, height-7)
 	vp.SetContent("")
-	ip := viewport.New((width/2)-2, height-5)
+	ip := viewport.New((width/2)-2, height-7)
 	ip.SetContent("")
 	utils.InitConfig()
 	username := viper.GetString("username")
@@ -267,8 +267,8 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.Width = msg.Width - 2
 			m.infoview.Width = 0
 		}
-		m.viewport.Height = msg.Height - 5
-		m.infoview.Height = msg.Height - 5
+		m.viewport.Height = msg.Height - 7
+		m.infoview.Height = msg.Height - 7
 		var vpCmd tea.Cmd
 		var ipCmd tea.Cmd
 		m.viewport, vpCmd = m.viewport.Update(msg)
