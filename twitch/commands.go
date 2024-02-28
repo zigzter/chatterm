@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/zigzter/chatterm/db"
 	"github.com/zigzter/chatterm/types"
+	"github.com/zigzter/chatterm/utils"
 )
 
 var (
@@ -40,9 +41,9 @@ func httpClient() *http.Client {
 // augmentRequest adds the broadcaster_id and moderator_id query params,
 // as well as setting auth and client id headers.
 func augmentRequest(req *http.Request) *http.Request {
-	channelid := viper.GetString("channel-id")
-	moderatorId := viper.GetString("user-id")
-	token := viper.GetString("token")
+	channelid := viper.GetString(utils.ChannelIDKey)
+	moderatorId := viper.GetString(utils.UserIDKey)
+	token := viper.GetString(utils.TokenKey)
 	query := req.URL.Query()
 	query.Add("broadcaster_id", channelid)
 	query.Add("moderator_id", moderatorId)
@@ -194,7 +195,8 @@ func sendInfoRequest(username string) (*types.UserInfo, error) {
 		return nil, err
 	}
 	userInfo.Details = userResp.Data[0]
-	hasModPrivs := viper.GetBool("is-mod") || viper.GetBool("is-broadcoaster")
+	userType := viper.GetString(utils.ChannelUserTypeKey)
+	hasModPrivs := userType == "moderator" || userType == "broadcaster"
 	if !hasModPrivs {
 		// The follower endpoint requires moderator privileges
 		return &userInfo, nil

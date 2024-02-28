@@ -87,7 +87,7 @@ func InitialChannelInputModel() ChannelInputModel {
 	ti := textinput.New()
 	ti.Placeholder = "a_seagull"
 	ti.Blur()
-	configChannel := viper.GetString("channel")
+	configChannel := viper.GetString(utils.ChannelKey)
 	if configChannel != "" {
 		ti.SetValue(configChannel)
 	}
@@ -108,16 +108,16 @@ func InitialChannelInputModel() ChannelInputModel {
 }
 
 func fetchLiveStreams(m *ChannelInputModel) {
-	userID := viper.GetString("user-id")
+	userID := viper.GetString(utils.UserIDKey)
 	if userID == "" {
-		username := viper.GetString("username")
+		username := viper.GetString(utils.UsernameKey)
 		userData, err := twitch.SendUserRequest(username)
 		if err != nil {
 			m.error = err.Error()
 		} else {
 			userID = userData.Data[0].ID
 			utils.SaveConfig(map[string]interface{}{
-				"user-id": userID,
+				utils.UserIDKey: userID,
 			})
 		}
 	}
@@ -189,7 +189,7 @@ func (m ChannelInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, keys.Enter):
 			utils.SaveConfig(map[string]interface{}{
-				"channel": m.textinput.Value(),
+				utils.ChannelKey: m.textinput.Value(),
 			})
 			return ChangeView(m, ChatState)
 		}

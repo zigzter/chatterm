@@ -75,7 +75,7 @@ func (m AuthModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if isValidUsernameLength(m.input) {
 				username := m.input.Value()
 				utils.SaveConfig(map[string]interface{}{
-					"username": username,
+					utils.UsernameKey: username,
 				})
 				m.serverStarting = true
 				ready := make(chan struct{}, 1)

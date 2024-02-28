@@ -58,11 +58,11 @@ func InitialChatModel(width int, height int) ChatModel {
 	ip := viewport.New((width/2)-2, height-7)
 	ip.SetContent("")
 	utils.InitConfig()
-	username := viper.GetString("username")
-	color := viper.GetString("color")
-	channelUserType := viper.GetString("channel-user-type")
-	oauth := fmt.Sprintf("oauth:%s", viper.GetString("token"))
-	channel := viper.GetString("channel")
+	username := viper.GetString(utils.UsernameKey)
+	color := viper.GetString(utils.ColorKey)
+	channelUserType := viper.GetString(utils.ChannelUserTypeKey)
+	oauth := fmt.Sprintf("oauth:%s", viper.GetString(utils.TokenKey))
+	channel := viper.GetString(utils.ChannelKey)
 	msgChan := make(chan types.ParsedIRCMessage, 100)
 	wsClient, err := utils.NewWebSocketClient()
 	if err != nil {
@@ -296,14 +296,14 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ac.Populate(msg.Users)
 		case types.UserStateMessage:
 			utils.SaveConfig(map[string]interface{}{
-				"color":             msg.Color,
-				"channel-user-type": msg.ChannelUserType,
+				utils.ColorKey:           msg.Color,
+				utils.ChannelUserTypeKey: msg.ChannelUserType,
 			})
 			m.currentUser.channelUserType = msg.ChannelUserType
 		case *types.RoomStateMessage:
 			if msg.ChannelID != nil {
 				utils.SaveConfig(map[string]interface{}{
-					"channel-id": *msg.ChannelID,
+					utils.ChannelIDKey: *msg.ChannelID,
 				})
 			}
 			if msg.EmoteOnly != nil {

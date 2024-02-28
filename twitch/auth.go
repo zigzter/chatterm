@@ -19,7 +19,7 @@ func StartLocalServer(ready chan<- struct{}, externalMsgs chan tea.Msg) tea.Cmd 
 			token := strings.TrimPrefix(r.URL.Path, "/token/")
 			if token != "" {
 				utils.SaveConfig(map[string]interface{}{
-					"token": token,
+					utils.TokenKey: token,
 				})
 				fmt.Fprintln(w, "Token received, you can close this window.")
 				externalMsgs <- types.TokenReceivedMsg{}

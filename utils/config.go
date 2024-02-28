@@ -9,7 +9,7 @@ import (
 // IsAuthRequired checks whether the token is present in the Viper config.
 // If it isn't, we need to authenticate.
 func IsAuthRequired() bool {
-	token := viper.GetString("token")
+	token := viper.GetString(TokenKey)
 	return token == ""
 }
 
