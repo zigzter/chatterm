@@ -1,30 +1,47 @@
 package models
 
 import (
-	"fmt"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
+	"github.com/spf13/viper"
+	"github.com/zigzter/chatterm/utils"
 )
 
 type SettingsModel struct {
-	form    *huh.Form
-	confirm bool
+	form *huh.Form
 }
 
+// TODO: Implement logic
 func isHexColor(input string) error {
 	return nil
 }
 
 var (
-	showBadges        bool
-	highlightSubs     bool
-	highlightRaids    bool
-	firstChatterColor string
+	showBadges        bool   = true
+	highlightSubs     bool   = true
+	highlightRaids    bool   = true
+	firstChatterColor string = "e64553"
 )
+
+type SettingsSaved struct{}
+
+func SaveSettings(shouldSave bool) {
+	if shouldSave {
+		utils.SaveConfig(map[string]interface{}{
+			"settings.showBadges":        showBadges,
+			"settings.highlightSubs":     highlightSubs,
+			"settings.highlightRaids":    highlightRaids,
+			"settings.firstChatterColor": firstChatterColor,
+		})
+	}
+}
 
 func InitialSettingsModel() SettingsModel {
 	m := SettingsModel{}
+	showBadges = viper.GetBool("settings.showBadges")
+	highlightSubs = viper.GetBool("settings.highlightSubs")
+	highlightRaids = viper.GetBool("settings.highlightRaids")
+	firstChatterColor = viper.GetString("settings.firstChatterColor")
 	m.form = huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[bool]().
@@ -63,11 +80,7 @@ func InitialSettingsModel() SettingsModel {
 				Key("save").
 				Title("Save Settings").
 				Validate(func(v bool) error {
-					if !v {
-						m.confirm = false
-						return nil
-					}
-					m.confirm = true
+					SaveSettings(v)
 					return nil
 				}).
 				Affirmative("Save").
@@ -97,9 +110,12 @@ func (m SettingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.form = f
 		cmds = append(cmds, cmd)
 	}
+	if m.form.State == huh.StateCompleted {
+		return ChangeView(m, ChannelInputState)
+	}
 	return m, tea.Batch(cmds...)
 }
 
 func (m SettingsModel) View() string {
-	return m.form.View() + fmt.Sprintf("\nConfirm: %t", m.confirm)
+	return m.form.View()
 }
