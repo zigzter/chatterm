@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
+	"github.com/spf13/viper"
 	"github.com/zigzter/chatterm/types"
 )
 
@@ -66,7 +67,18 @@ func usernameColorizer(color string) lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
 }
 
+var (
+	showBadges     = viper.GetBool("settings.showbadges")
+	highlightSubs  = viper.GetBool("settings.highlightsubs")
+	highlightRaids = viper.GetBool("settings.highlightraids")
+)
+
+// GenerateIcon returns a colored user-type icon, if applicable to the user.
+// For example, a green sword icon for a moderator.
 func GenerateIcon(userType string) string {
+	if !showBadges {
+		return ""
+	}
 	switch userType {
 	case "broadcaster":
 		return lipgloss.NewStyle().Foreground(lipgloss.Color("#d20f39")).Render("[]")
@@ -117,7 +129,10 @@ func FormatSubMessage(message types.SubMessage, width int) string {
 		fullMessage,
 	)
 	msg = wordwrap.String(msg, width)
-	return box.Render("Sub", msg)
+	if highlightSubs {
+		return box.Render("Sub", msg)
+	}
+	return msg + "\n"
 }
 
 func FormatAnnouncementMessage(message types.AnnouncementMessage, width int) string {
@@ -139,7 +154,10 @@ func FormatRaidMessage(message types.RaidMessage, width int) string {
 		message.ViewerCount,
 	)
 	msg = wordwrap.String(msg, width)
-	return box.Render("Raid", msg)
+	if highlightRaids {
+		return box.Render("Raid", msg)
+	}
+	return msg + "\n"
 }
 
 func FormatGiftSubMessage(message types.SubGiftMessage, width int) string {
@@ -150,7 +168,10 @@ func FormatGiftSubMessage(message types.SubGiftMessage, width int) string {
 		message.ReceiverName,
 	)
 	msg = wordwrap.String(msg, width)
-	return box.Render("Gift sub", msg)
+	if highlightSubs {
+		return box.Render("Gift sub", msg)
+	}
+	return msg + "\n"
 }
 
 func FormatMysteryGiftSubMessage(message types.MysterySubGiftMessage, width int) string {
@@ -161,5 +182,8 @@ func FormatMysteryGiftSubMessage(message types.MysterySubGiftMessage, width int)
 		message.GiftAmount,
 	)
 	msg = wordwrap.String(msg, width)
-	return box.Render("Gifting subs", msg)
+	if highlightSubs {
+		return box.Render("Gifting subs", msg)
+	}
+	return msg + "\n"
 }
