@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	newMsgColor       = "#e64553"
 	subColor          = "#04a5e5"
 	announcementColor = "#40a02b"
 	raidColor         = "#fe640b"
@@ -68,11 +67,12 @@ func usernameColorizer(color string) lipgloss.Style {
 }
 
 var (
-	showBadges     bool
-	showTimestamps bool
-	highlightSubs  bool
-	highlightRaids bool
-	watchedUsers   map[string]any
+	showBadges            bool
+	showTimestamps        bool
+	highlightSubs         bool
+	highlightRaids        bool
+	firstTimeChatterColor string
+	watchedUsers          map[string]any
 )
 
 // SetFormatterConfigValues sets the formatter customization options from the config.
@@ -83,6 +83,7 @@ func SetFormatterConfigValues() {
 	highlightSubs = viper.GetBool(HighlightRaidsKey)
 	highlightRaids = viper.GetBool(HighlightRaidsKey)
 	watchedUsers = viper.GetStringMap(WatchedUsersKey)
+	firstTimeChatterColor = viper.GetString(FirstTimeChatterColorKey)
 }
 
 // GenerateIcon returns a colored user-type icon, if applicable to the user.
@@ -114,7 +115,7 @@ func FormatChatMessage(message types.ChatMessage, width int) string {
 	if showTimestamps {
 		timestamp = "[" + message.Timestamp + "]"
 	}
-	box := NewBoxWithLabel(newMsgColor)
+	box := NewBoxWithLabel(firstTimeChatterColor)
 	msg := fmt.Sprintf(
 		"%s%s%s: %s",
 		timestamp,

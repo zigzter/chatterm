@@ -29,11 +29,11 @@ type SettingsSaved struct{}
 func SaveSettings(shouldSave bool) {
 	if shouldSave {
 		utils.SaveConfig(map[string]interface{}{
-			utils.ShowBadgesKey:        showBadges,
-			utils.ShowTimestampsKey:    showTimestamps,
-			utils.HighlightSubsKey:     highlightSubs,
-			utils.HighlightRaidsKey:    highlightRaids,
-			utils.FirstChatterColorKey: firstChatterColor,
+			utils.ShowBadgesKey:            showBadges,
+			utils.ShowTimestampsKey:        showTimestamps,
+			utils.HighlightSubsKey:         highlightSubs,
+			utils.HighlightRaidsKey:        highlightRaids,
+			utils.FirstTimeChatterColorKey: firstChatterColor,
 		})
 	}
 }
@@ -44,7 +44,7 @@ func InitialSettingsModel() SettingsModel {
 	showTimestamps = viper.GetBool(utils.ShowTimestampsKey)
 	highlightSubs = viper.GetBool(utils.HighlightSubsKey)
 	highlightRaids = viper.GetBool(utils.HighlightRaidsKey)
-	firstChatterColor = viper.GetString(utils.FirstChatterColorKey)
+	firstChatterColor = viper.GetString(utils.FirstTimeChatterColorKey)
 	m.form = huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[bool]().
@@ -85,7 +85,7 @@ func InitialSettingsModel() SettingsModel {
 				Value(&highlightRaids),
 			huh.NewInput().
 				Title("First chatter color").
-				Prompt("#").
+				Prompt(">").
 				Validate(isHexColor).
 				Value(&firstChatterColor),
 			huh.NewConfirm().

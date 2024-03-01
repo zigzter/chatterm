@@ -40,13 +40,16 @@ Simply download the binary and run `./chatterm`
 - Timeout a user: `/ban username timeInSeconds`
 - Clear chat: `/clear`
 - Get a user's info: `/info username`
+- Watch a user (highlight their messages): `/watch username`
+    - To remove the user, re-run the command
+    - You can also manually edit the `$HOME/.config/chatterm.json` file to add/remove users under the `watched-users` key
 
 ### Todo:
 
 - [x] Connect to Twitch channel
 - [x] Add ability to send chats
 - [x] Store Oauth and username in a local config
-- [ ] Customize chat output (show/hide badges, colors for first chatters, etc)
+- [x] Customize chat output (show/hide badges, colors for first chatters, etc)
 - [x] Query user info
 - [ ] Handle network drops
 - [ ] Allow saving chat to file
