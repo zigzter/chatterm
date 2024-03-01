@@ -9,6 +9,7 @@ const (
 	ChannelKey           = "channel"
 	ChannelIDKey         = "channel-id"
 	ChannelUserTypeKey   = "channel-user-type"
+	WatchedUsersKey      = "watched-users"
 	FirstChatterColorKey = "settings.first-chatter-color"
 	HighlightRaidsKey    = "settings.highlight-raids"
 	HighlightSubsKey     = "settings.highlight-subs"

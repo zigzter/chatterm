@@ -80,3 +80,9 @@ func (t *Trie) Populate(names []string) {
 		t.Insert(name)
 	}
 }
+
+func (t *Trie) Reset() {
+	t.Prefix = ""
+	t.Suggestions = nil
+	t.CurrentIndex = 0
+}

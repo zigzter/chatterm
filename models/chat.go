@@ -100,7 +100,7 @@ func InitialChatModel(width int, height int) ChatModel {
 	}
 }
 
-var autocompletePrefixes = [4]string{"/ban ", "/unban ", "/info ", "@"}
+var autocompletePrefixes = [5]string{"/ban ", "/unban ", "/info ", "@", "/watch "}
 
 // shouldAutocomplete confirms whether autocomplete should trigger,
 // and returns the prefix for re-use when setting textinput value.
@@ -173,7 +173,10 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEnter:
 			message := m.textinput.Value()
 			isCommand, command, args := processChatInput(message)
-			if isCommand {
+			if isCommand && command == "watch" {
+				responseMsg := utils.WatchUser(strings.ToLower(args[0]))
+				m.chatContent += responseMsg + "\n"
+			} else if isCommand {
 				var feedback string
 				res, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
 				if err != nil {
@@ -255,7 +258,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.viewport.SetContent(m.chatContent)
 			m.textinput.Reset()
-			m.ac.Prefix = ""
+			m.ac.Reset()
 			return m, listenToWebSocket(m.msgChan)
 		}
 	case tea.WindowSizeMsg:

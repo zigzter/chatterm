@@ -72,6 +72,7 @@ var (
 	showTimestamps bool
 	highlightSubs  bool
 	highlightRaids bool
+	watchedUsers   map[string]any
 )
 
 // SetFormatterConfigValues sets the formatter customization options from the config.
@@ -81,6 +82,7 @@ func SetFormatterConfigValues() {
 	showTimestamps = viper.GetBool(ShowTimestampsKey)
 	highlightSubs = viper.GetBool(HighlightRaidsKey)
 	highlightRaids = viper.GetBool(HighlightRaidsKey)
+	watchedUsers = viper.GetStringMap(WatchedUsersKey)
 }
 
 // GenerateIcon returns a colored user-type icon, if applicable to the user.
@@ -123,6 +125,8 @@ func FormatChatMessage(message types.ChatMessage, width int) string {
 	msg = wordwrap.String(msg, width)
 	if message.IsFirstMessage {
 		return box.Render("First message", msg)
+	} else if watchedUsers[strings.ToLower(message.DisplayName)] == true {
+		return box.Render("Watched user", msg)
 	} else {
 		return msg + "\n"
 	}
