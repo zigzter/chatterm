@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/spf13/viper"
+	"github.com/zigzter/chatterm/db"
 	"github.com/zigzter/chatterm/twitch"
 	"github.com/zigzter/chatterm/types"
 	"github.com/zigzter/chatterm/utils"
@@ -50,6 +51,7 @@ type ChatModel struct {
 	chatSettings     ChatSettings
 	labelBox         utils.BoxWithLabel
 	currentUser      currentUser
+	chatMessageRepo  db.ChatMessageRepo
 }
 
 func InitialChatModel(width int, height int) ChatModel {
@@ -75,6 +77,8 @@ func InitialChatModel(width int, height int) ChatModel {
 	ti.Placeholder = "Send a message"
 	ti.Focus()
 	labelBox := utils.NewBoxWithLabel("#8839ef")
+	dbInstance := db.OpenDB()
+	chatMessageRepo := db.NewChatMessageRepository(dbInstance)
 	return ChatModel{
 		input:            "",
 		textinput:        ti,
@@ -97,6 +101,7 @@ func InitialChatModel(width int, height int) ChatModel {
 		chatSettings: ChatSettings{
 			Slow: "0",
 		},
+		chatMessageRepo: *chatMessageRepo,
 	}
 }
 
@@ -283,6 +288,13 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg := msg.Msg.(type) {
 		case types.ChatMessage:
 			m.messages = append(m.messages, msg)
+			m.chatMessageRepo.Insert(types.InsertChat{
+				Username:  msg.DisplayName,
+				UserID:    msg.UserId,
+				Channel:   m.channel,
+				Content:   msg.Message,
+				Timestamp: msg.Timestamp,
+			})
 			m.chatContent += utils.FormatChatMessage(msg, width)
 			m.ac.Insert(msg.DisplayName)
 		case types.SubMessage:
