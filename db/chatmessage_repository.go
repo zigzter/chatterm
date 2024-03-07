@@ -24,7 +24,6 @@ func NewChatMessageRepository(db *sql.DB) *ChatMessageRepo {
 }
 
 func (c *ChatMessageRepo) Insert(msg types.InsertChat) {
-	log.Printf("%#v", msg)
 	sqlStatement := `
         INSERT INTO chat_messages (username, user_id, channel, content, timestamp) 
         VALUES (?, ?, ?, ?, ?)`
@@ -42,7 +41,8 @@ func (c *ChatMessageRepo) Insert(msg types.InsertChat) {
 }
 
 func (c *ChatMessageRepo) Search(query string) ([]string, error) {
-	stmt := `SELECT username, user_id, channel, content, timestamp FROM chat_messages WHERE chat_messages MATCH ?`
+	stmt := `SELECT username, user_id, channel, content, timestamp
+        FROM chat_messages WHERE chat_messages MATCH ?`
 	rows, err := c.db.Query(stmt, query)
 	if err != nil {
 		return nil, err

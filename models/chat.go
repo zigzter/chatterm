@@ -392,7 +392,7 @@ func (m ChatModel) View() string {
 	if m.chatSettings.Slow != "0" && m.chatSettings.Slow != "" {
 		chatSettingsString += fmt.Sprintf("[Slow Mode: %ss]", m.chatSettings.Slow)
 	}
-	b.WriteString(chatSettingsString + icon + m.textinput.View() + "\n")
+	b.WriteString(chatSettingsString + icon + m.textinput.View())
 	b.WriteString(helpStyle.Render("[Esc]: return to channel selection - [Ctrl+c]: quit - [tab]: autocomplete" + infoCloseMessage))
 	return b.String()
 }
