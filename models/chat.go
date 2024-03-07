@@ -150,6 +150,62 @@ func (m *ChatModel) WrapMessages() {
 	m.viewport.GotoBottom()
 }
 
+func (m *ChatModel) ProcessBanResponse(resp *types.UserBanResp, args []string) string {
+	data := resp.Data[0]
+	var feedback string
+	if data.EndTime == nil {
+		feedback = fmt.Sprintf("You banned %s from the chat.\n", args[0])
+	} else {
+		feedback = fmt.Sprintf(
+			"You timed out %s until %s\n",
+			args[0],
+			data.EndTime,
+		)
+	}
+	return feedback
+}
+
+func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string) {
+	// TODO: Make the info stack vertically if width too small
+	m.shouldRenderInfo = true
+	m.viewport.Width = (m.width / 2) - 2
+	details := resp.Details
+	following := resp.Following
+	followingText := ""
+	if following.FollowedAt != "" {
+		followingText = "Following since: " + following.FollowedAt
+	}
+	// TODO: instead of getting icon from messages and replacing,
+	// get it from the API, along with username color
+	feedback := fmt.Sprintf(
+		"User: {icon}%s\nAccount created: %s\n%s\n",
+		details.DisplayName,
+		details.CreatedAt,
+		followingText,
+	)
+	icon := ""
+	for _, chatMsg := range m.messages {
+		if chatMsg.DisplayName == args[0] {
+			// TODO: move this out of the loop
+			nameColor := lipgloss.NewStyle().
+				Foreground(lipgloss.Color(chatMsg.Color))
+			icon = utils.GenerateIcon(chatMsg.ChannelUserType)
+			feedback += wordwrap.String(
+				fmt.Sprintf(
+					"%s: %s\n",
+					nameColor.Render(chatMsg.DisplayName),
+					chatMsg.Message,
+				),
+				m.infoview.Width,
+			)
+		}
+	}
+	feedback = strings.Replace(feedback, "{icon}", icon, 1)
+	m.WrapMessages()
+	m.textinput.Reset()
+	m.infoview.SetContent(feedback)
+}
+
 func (m ChatModel) Init() tea.Cmd {
 	return listenToWebSocket(m.msgChan)
 }
@@ -190,57 +246,11 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					switch resp := res.(type) {
 					case *types.UserBanResp:
-						data := resp.Data[0]
-						if data.EndTime == nil {
-							feedback = fmt.Sprintf("You banned %s from the chat.\n", args[0])
-						} else {
-							feedback = fmt.Sprintf(
-								"You timed out %s until %s\n",
-								args[0],
-								data.EndTime,
-							)
-						}
+						feedback = m.ProcessBanResponse(resp, args)
 					case *types.UpdateChatSettingsData:
 						feedback = fmt.Sprintf("Updated %s chat setting.\n", command)
 					case *types.UserInfo:
-						// TODO: Make the info stack vertically if width too small
-						m.shouldRenderInfo = true
-						m.viewport.Width = (m.width / 2) - 2
-						details := resp.Details
-						following := resp.Following
-						followingText := ""
-						if following.FollowedAt != "" {
-							followingText = "Following since: " + following.FollowedAt
-						}
-						// TODO: instead of getting icon from messages and replacing,
-						// get it from the API, along with username color
-						feedback := fmt.Sprintf(
-							"User: {icon}%s\nAccount created: %s\n%s\n",
-							details.DisplayName,
-							details.CreatedAt,
-							followingText,
-						)
-						icon := ""
-						for _, chatMsg := range m.messages {
-							if chatMsg.DisplayName == args[0] {
-								// TODO: move this out of the loop
-								nameColor := lipgloss.NewStyle().
-									Foreground(lipgloss.Color(chatMsg.Color))
-								icon = utils.GenerateIcon(chatMsg.ChannelUserType)
-								feedback += wordwrap.String(
-									fmt.Sprintf(
-										"%s: %s\n",
-										nameColor.Render(chatMsg.DisplayName),
-										chatMsg.Message,
-									),
-									m.infoview.Width,
-								)
-							}
-						}
-						feedback = strings.Replace(feedback, "{icon}", icon, 1)
-						m.WrapMessages()
-						m.textinput.Reset()
-						m.infoview.SetContent(feedback)
+						m.ProcessUserInfoResponse(resp, args)
 						return m, listenToWebSocket(m.msgChan)
 					case nil:
 						// TODO: find a better way to do this?
@@ -249,6 +259,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.chatContent += feedback
 				}
 			} else {
+				// Entered text is a regular message, format and append to viewport, and send
 				nameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(m.currentUser.color))
 				time := utils.ParseTimestamp(strconv.FormatInt(time.Now().Unix(), 10))
 				icon := utils.GenerateIcon(m.currentUser.channelUserType)
