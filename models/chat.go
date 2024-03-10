@@ -166,9 +166,6 @@ func (m *ChatModel) ProcessBanResponse(resp *types.UserBanResp, args []string) s
 }
 
 func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string) {
-	// TODO: Make the info stack vertically if width too small
-	m.shouldRenderInfo = true
-	m.viewport.Width = (m.width / 2) - 2
 	details := resp.Details
 	following := resp.Following
 	followingText := ""
@@ -201,9 +198,16 @@ func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string)
 		}
 	}
 	feedback = strings.Replace(feedback, "{icon}", icon, 1)
+	m.RenderInfoView(feedback)
+}
+
+func (m *ChatModel) RenderInfoView(content string) {
+	// TODO: Make the info stack vertically if width too small
+	m.shouldRenderInfo = true
+	m.viewport.Width = (m.width / 2) - 2
 	m.WrapMessages()
+	m.infoview.SetContent(content)
 	m.textinput.Reset()
-	m.infoview.SetContent(feedback)
 }
 
 func (m ChatModel) Init() tea.Cmd {
