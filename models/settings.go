@@ -16,35 +16,15 @@ func isHexColor(input string) error {
 	return nil
 }
 
-var (
-	showBadges        bool   = true
-	showTimestamps    bool   = true
-	highlightSubs     bool   = true
-	highlightRaids    bool   = true
-	firstChatterColor string = "e64553"
-)
-
 type SettingsSaved struct{}
-
-func SaveSettings(shouldSave bool) {
-	if shouldSave {
-		utils.SaveConfig(map[string]interface{}{
-			utils.ShowBadgesKey:            showBadges,
-			utils.ShowTimestampsKey:        showTimestamps,
-			utils.HighlightSubsKey:         highlightSubs,
-			utils.HighlightRaidsKey:        highlightRaids,
-			utils.FirstTimeChatterColorKey: firstChatterColor,
-		})
-	}
-}
 
 func InitialSettingsModel() SettingsModel {
 	m := SettingsModel{}
-	showBadges = viper.GetBool(utils.ShowBadgesKey)
-	showTimestamps = viper.GetBool(utils.ShowTimestampsKey)
-	highlightSubs = viper.GetBool(utils.HighlightSubsKey)
-	highlightRaids = viper.GetBool(utils.HighlightRaidsKey)
-	firstChatterColor = viper.GetString(utils.FirstTimeChatterColorKey)
+	showBadges := viper.GetBool(utils.ShowBadgesKey)
+	showTimestamps := viper.GetBool(utils.ShowTimestampsKey)
+	highlightSubs := viper.GetBool(utils.HighlightSubsKey)
+	highlightRaids := viper.GetBool(utils.HighlightRaidsKey)
+	firstChatterColor := viper.GetString(utils.FirstTimeChatterColorKey)
 	m.form = huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[bool]().
@@ -84,6 +64,7 @@ func InitialSettingsModel() SettingsModel {
 				Description("Choose whether to highlight raid messages").
 				Value(&highlightRaids),
 			huh.NewInput().
+				Key("color").
 				Title("First chatter color").
 				Prompt(">").
 				Validate(isHexColor).
@@ -92,7 +73,7 @@ func InitialSettingsModel() SettingsModel {
 				Key("save").
 				Title("Save Settings").
 				Validate(func(v bool) error {
-					SaveSettings(v)
+					m.SaveSettings(v)
 					return nil
 				}).
 				Affirmative("Save").
@@ -100,6 +81,18 @@ func InitialSettingsModel() SettingsModel {
 		),
 	)
 	return m
+}
+
+func (m SettingsModel) SaveSettings(shouldSave bool) {
+	if shouldSave {
+		utils.SaveConfig(map[string]interface{}{
+			utils.ShowBadgesKey:            m.form.GetBool("badges"),
+			utils.ShowTimestampsKey:        m.form.GetBool("timestamps"),
+			utils.HighlightSubsKey:         m.form.GetBool("subs"),
+			utils.HighlightRaidsKey:        m.form.GetBool("raids"),
+			utils.FirstTimeChatterColorKey: m.form.GetString("color"),
+		})
+	}
 }
 
 func (m SettingsModel) Init() tea.Cmd {

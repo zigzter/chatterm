@@ -24,6 +24,11 @@ func InitConfig() {
 			log.Println("Config file not found, creating a new one...")
 			viper.Set(UsernameKey, "")
 			viper.Set(WatchedUsersKey, map[string]string{})
+			viper.Set(ShowBadgesKey, true)
+			viper.Set(ShowTimestampsKey, true)
+			viper.Set(HighlightSubsKey, true)
+			viper.Set(HighlightRaidsKey, true)
+			viper.Set(FirstTimeChatterColorKey, "e64553")
 			if err := viper.SafeWriteConfig(); err != nil {
 				log.Println("Error creating config file:", err)
 			}

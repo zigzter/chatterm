@@ -29,8 +29,10 @@ Currently only tested on Linux. macOS might work if you build it yourself.
 Cloning option (requires Go):
 1. `git clone https://github.com/zigzter/chatterm.git`
 2. `cd chatterm`
-3. `go build .`
+3. `go build --tags "fts5" .`
 4. `./chatterm`
+
+If you have to re-auth for whatever reason, and the oauth request gets stuck loading, try removing the connection from Twitch Connections, then retry the auth.
 
 Downloading binary option:
 Simply download the binary and run `./chatterm`
@@ -52,7 +54,7 @@ Simply download the binary and run `./chatterm`
 - [x] Customize chat output (show/hide badges, colors for first chatters, etc)
 - [x] Query user info
 - [ ] Handle network drops
-- [ ] Allow saving chat to file
+- [x] Allow saving chat to file
 - [ ] Allow searching chat
 - [x] Find a better method of rendering chats
 - [x] Perform moderator actions (currently only ban/timeout & clear chat)
