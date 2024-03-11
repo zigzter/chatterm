@@ -32,6 +32,7 @@ func NewBoxWithLabel(color string) BoxWithLabel {
 	}
 }
 
+// SetWidth is used for wrapping contained text
 func (b *BoxWithLabel) SetWidth(width int) *BoxWithLabel {
 	b.width = width
 	return b

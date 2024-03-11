@@ -52,6 +52,7 @@ type ChatModel struct {
 	labelBox         utils.BoxWithLabel
 	currentUser      currentUser
 	chatMessageRepo  db.ChatMessageRepo
+	shouldStackInfo  bool
 }
 
 func InitialChatModel(width int, height int) ChatModel {
@@ -202,9 +203,21 @@ func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string)
 }
 
 func (m *ChatModel) RenderInfoView(content string) {
-	// TODO: Make the info stack vertically if width too small
+	if m.width > 90 {
+		// TODO: Investigate better options for width/heigh calculation
+		m.shouldStackInfo = false
+		m.viewport.Height = m.height - 7
+		m.infoview.Height = m.height - 7
+		m.viewport.Width = (m.width / 2) - 2
+		m.infoview.Width = (m.width / 2) - 2
+	} else {
+		m.shouldStackInfo = true
+		m.viewport.Width = m.width - 2
+		m.infoview.Width = m.width - 2
+		m.infoview.Height = (m.height / 2) - 4
+		m.viewport.Height = (m.height / 2) - 4
+	}
 	m.shouldRenderInfo = true
-	m.viewport.Width = (m.width / 2) - 2
 	m.WrapMessages()
 	m.infoview.SetContent(content)
 	m.textinput.Reset()
@@ -224,6 +237,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlX:
 			m.shouldRenderInfo = false
 			m.viewport.Width = m.width - 2
+			m.viewport.Height = m.height - 7
 			m.WrapMessages()
 		case tea.KeyEsc:
 			m.WsClient.Conn.Close()
@@ -282,17 +296,8 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, listenToWebSocket(m.msgChan)
 		}
 	case tea.WindowSizeMsg:
-		if m.shouldRenderInfo {
-			m.width = (msg.Width / 2) - 2
-			m.viewport.Width = m.width
-			m.infoview.Width = m.width
-		} else {
-			m.width = msg.Width - 2
-			m.viewport.Width = msg.Width - 2
-			m.infoview.Width = 0
-		}
-		m.viewport.Height = msg.Height - 7
-		m.infoview.Height = msg.Height - 7
+		m.height = msg.Height
+		m.width = msg.Width
 		var vpCmd tea.Cmd
 		var ipCmd tea.Cmd
 		m.viewport, vpCmd = m.viewport.Update(msg)
@@ -371,11 +376,27 @@ func (m ChatModel) View() string {
 	infoCloseMessage := ""
 	if m.shouldRenderInfo {
 		infoCloseMessage = " - [Ctrl+x] close info view"
-		b.WriteString(lipgloss.JoinHorizontal(
-			0,
-			m.labelBox.SetWidth(m.viewport.Width).Render(m.channel, m.viewport.View()),
-			m.labelBox.SetWidth(m.infoview.Width).Render("User info", m.infoview.View())),
-		)
+		viewport := m.labelBox.
+			SetWidth(m.viewport.Width).
+			Render(m.channel, m.viewport.View())
+		infoview := m.labelBox.
+			SetWidth(m.infoview.Width).
+			Render("User info", m.infoview.View())
+		combinedView := ""
+		if m.shouldStackInfo {
+			combinedView = lipgloss.JoinVertical(
+				0,
+				viewport,
+				infoview,
+			)
+		} else {
+			combinedView = lipgloss.JoinHorizontal(
+				0,
+				viewport,
+				infoview,
+			)
+		}
+		b.WriteString(combinedView)
 	} else {
 		infoCloseMessage = ""
 		b.WriteString(m.labelBox.
