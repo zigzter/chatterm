@@ -79,7 +79,6 @@ func isValidCommand(command string) bool {
 
 // SendTwitchCommand sends a request to the Twitch Helix API to perform a command
 func SendTwitchCommand(command types.TwitchCommand, args []string) (interface{}, error) {
-	// TwitchCommand is a string, why do I need to convert it to one here?
 	if isValid := isValidCommand(string(command)); !isValid {
 		return nil, errors.New("Invalid command")
 	}
@@ -193,6 +192,9 @@ func sendInfoRequest(username string) (*types.UserInfo, error) {
 	userResp, err := SendUserRequest(username)
 	if err != nil {
 		return nil, err
+	}
+	if len(userResp.Data) == 0 {
+		return nil, errors.New("User does not exist")
 	}
 	userInfo.Details = userResp.Data[0]
 	userType := viper.GetString(utils.ChannelUserTypeKey)

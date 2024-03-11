@@ -10,6 +10,10 @@ type TrieNode struct {
 	originalNames []string // Store the case-sensitive names that end here
 }
 
+func NewTrie() *Trie {
+	return &Trie{Root: NewTrieNode()}
+}
+
 func NewTrieNode() *TrieNode {
 	return &TrieNode{
 		children:      make(map[rune]*TrieNode),

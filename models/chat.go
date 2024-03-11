@@ -87,7 +87,7 @@ func InitialChatModel(width int, height int) ChatModel {
 		msgChan:          msgChan,
 		WsClient:         wsClient,
 		channel:          channel,
-		ac:               &utils.Trie{Root: utils.NewTrieNode()},
+		ac:               utils.NewTrie(),
 		width:            width,
 		height:           height,
 		infoview:         ip,
