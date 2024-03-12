@@ -1,6 +1,9 @@
 package models
 
 import (
+	"errors"
+	"regexp"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/viper"
@@ -11,9 +14,13 @@ type SettingsModel struct {
 	form *huh.Form
 }
 
-// TODO: Implement logic
+var hexRegex *regexp.Regexp = regexp.MustCompile("(?i)^#[0-9A-F]{6}$")
+
 func isHexColor(input string) error {
-	return nil
+	if hexRegex.MatchString(input) {
+		return nil
+	}
+	return errors.New("Color must be a valid hex code")
 }
 
 type SettingsSaved struct{}
