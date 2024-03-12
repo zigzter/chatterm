@@ -25,6 +25,7 @@ const (
 	Delete        TwitchCommand = "delete"
 	Slow          TwitchCommand = "slow"
 	SubOnly       TwitchCommand = "subonly"
+	Shield        TwitchCommand = "shield"
 	EmoteOnly     TwitchCommand = "emoteonly"
 	FollowersOnly TwitchCommand = "followers"
 	User          TwitchCommand = "user"
@@ -140,4 +141,16 @@ type UpdateChatSettingsData struct {
 
 type UpdateChatSettingsResp struct {
 	Data []UpdateChatSettingsData `json:"data"`
+}
+
+type ShieldData struct {
+	IsActive        bool      `json:"is_active"`
+	ModeratorID     string    `json:"moderator_id"`
+	ModeratorName   string    `json:"moderator_name"`
+	ModeratorLogin  string    `json:"moderator_login"`
+	LastActivatedAt time.Time `json:"last_activated_at"`
+}
+
+type ShieldResp struct {
+	Data []ShieldData `json:"data"`
 }

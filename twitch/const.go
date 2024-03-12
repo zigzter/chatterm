@@ -60,4 +60,8 @@ var RequestMap = map[types.TwitchCommand]CommandDetails{
 		Endpoint: "/streams/followed",
 		Method:   "GET",
 	},
+	types.Shield: {
+		Endpoint: "/moderation/shield_mode",
+		Method:   "PUT",
+	},
 }

@@ -70,7 +70,7 @@ func fireRequest(req *http.Request) ([]byte, error) {
 
 func isValidCommand(command string) bool {
 	switch types.TwitchCommand(command) {
-	case types.Ban, types.Clear, types.Unban, types.Delete, types.Info,
+	case types.Ban, types.Clear, types.Unban, types.Delete, types.Info, types.Shield,
 		types.FollowersOnly, types.SubOnly, types.Slow, types.EmoteOnly:
 		return true
 	}
@@ -93,6 +93,8 @@ func SendTwitchCommand(command types.TwitchCommand, args []string) (interface{},
 		return sendClearRequest()
 	case types.Delete:
 		return sendDeleteRequest(args)
+	case types.Shield:
+		return sendShieldRequest(args)
 	case types.Slow, types.SubOnly, types.FollowersOnly:
 		var duration string
 		if len(args) > 0 {
@@ -330,4 +332,31 @@ func sendDeleteRequest(args []string) (any, error) {
 		return nil, err
 	}
 	return bytes, nil
+}
+
+func sendShieldRequest(args []string) (*types.ShieldResp, error) {
+	if len(args) == 0 {
+		return nil, errors.New("Please provide 'on' or 'off' as an argument")
+	}
+	status := args[0]
+	if status != "on" && status != "off" {
+		return nil, errors.New("Please provide 'on' or 'off' as an argument")
+	}
+	cmdDetails := RequestMap[types.Shield]
+	url := rootUrl + cmdDetails.Endpoint
+	enable := true
+	if status == "off" {
+		enable = false
+	}
+	requestBody, err := json.Marshal(map[string]bool{"is_active": enable})
+	req, err := http.NewRequest(cmdDetails.Method, url, bytes.NewBuffer(requestBody))
+	req.Header.Set("Content-Type", "application/json")
+	req = augmentRequest(req)
+	bytes, err := fireRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	var shieldResponse types.ShieldResp
+	json.Unmarshal(bytes, &shieldResponse)
+	return &shieldResponse, nil
 }

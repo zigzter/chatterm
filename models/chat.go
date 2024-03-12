@@ -265,6 +265,9 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch resp := res.(type) {
 					case *types.UserBanResp:
 						feedback = m.ProcessBanResponse(resp, args)
+					case *types.ShieldResp:
+						isActive := resp.Data[0].IsActive
+						feedback = fmt.Sprintf("Shield mode: %t\n", isActive)
 					case *types.UpdateChatSettingsData:
 						feedback = fmt.Sprintf("Updated %s chat setting.\n", command)
 					case *types.UserInfo:
