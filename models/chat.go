@@ -199,10 +199,10 @@ func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string)
 		}
 	}
 	feedback = strings.Replace(feedback, "{icon}", icon, 1)
-	m.RenderInfoView(feedback)
+	m.SetInfoView(feedback)
 }
 
-func (m *ChatModel) RenderInfoView(content string) {
+func (m *ChatModel) SetInfoView(content string) {
 	if m.width > 90 {
 		// TODO: Investigate better options for width/heigh calculation
 		m.shouldStackInfo = false
@@ -371,32 +371,30 @@ func iconColorizer(color string) lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
 }
 
+func (m ChatModel) renderInfoView() string {
+	viewport := m.labelBox.
+		SetWidth(m.viewport.Width).
+		Render(m.channel, m.viewport.View())
+	infoview := m.labelBox.
+		SetWidth(m.infoview.Width).
+		Render("User info", m.infoview.View())
+	combinedView := ""
+	joinArgs := []string{viewport, infoview}
+	if m.shouldStackInfo {
+		combinedView = lipgloss.JoinVertical(0, joinArgs...)
+	} else {
+		combinedView = lipgloss.JoinHorizontal(0, joinArgs...)
+	}
+	return combinedView
+}
+
 func (m ChatModel) View() string {
 	var b strings.Builder
 	infoCloseMessage := ""
 	if m.shouldRenderInfo {
 		infoCloseMessage = " - [Ctrl+x] close info view"
-		viewport := m.labelBox.
-			SetWidth(m.viewport.Width).
-			Render(m.channel, m.viewport.View())
-		infoview := m.labelBox.
-			SetWidth(m.infoview.Width).
-			Render("User info", m.infoview.View())
-		combinedView := ""
-		if m.shouldStackInfo {
-			combinedView = lipgloss.JoinVertical(
-				0,
-				viewport,
-				infoview,
-			)
-		} else {
-			combinedView = lipgloss.JoinHorizontal(
-				0,
-				viewport,
-				infoview,
-			)
-		}
-		b.WriteString(combinedView)
+		infoView := m.renderInfoView()
+		b.WriteString(infoView)
 	} else {
 		infoCloseMessage = ""
 		b.WriteString(m.labelBox.
