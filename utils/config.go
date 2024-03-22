@@ -3,7 +3,9 @@ package utils
 import (
 	"fmt"
 	"log"
+	"os"
 
+	gap "github.com/muesli/go-app-paths"
 	"github.com/spf13/viper"
 )
 
@@ -14,11 +16,40 @@ func IsAuthRequired() bool {
 	return token == ""
 }
 
+func createConfigDir(path string) error {
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			return os.Mkdir(path, 0o770)
+		}
+		return err
+	}
+	return nil
+}
+
+func setupPath() string {
+	scope := gap.NewScope(gap.User, "chatterm")
+	dirs, err := scope.ConfigDirs()
+	if err != nil {
+		log.Fatal(err)
+	}
+	var configPath string
+	if len(dirs) > 0 {
+		configPath = dirs[0]
+	} else {
+		configPath, _ = os.UserHomeDir()
+	}
+	if err := createConfigDir(configPath); err != nil {
+		log.Fatal(err)
+	}
+	return configPath
+}
+
 // InitConfig sets up the config, creating if necessary.
 func InitConfig() {
-	viper.SetConfigName("chatterm")
+	configPath := setupPath()
+	viper.SetConfigName("config")
 	viper.SetConfigType("json")
-	viper.AddConfigPath("$HOME/.config/")
+	viper.AddConfigPath(configPath)
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			log.Println("Config file not found, creating a new one...")
