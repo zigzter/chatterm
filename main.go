@@ -19,7 +19,7 @@ func main() {
 		log.Fatalf("err: %w", err)
 	}
 	defer f.Close()
-	sql := db.OpenDB()
+	sql := db.OpenDB(configPath)
 	defer sql.Close()
 	db.CreateTables(sql)
 

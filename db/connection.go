@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"sync"
 )
@@ -12,9 +13,11 @@ var (
 	err        error
 )
 
-func OpenDB() *sql.DB {
+func OpenDB(path ...string) *sql.DB {
 	once.Do(func() {
-		dbInstance, err = sql.Open("sqlite3", "file:chatterm.db?cache=shared&mode=rwc")
+		// HACK: This should only be run by the call in main.go, so we're using an array to make it optional
+		// TODO: Find a better way to do this
+		dbInstance, err = sql.Open("sqlite3", fmt.Sprintf("file:%s/chatterm.db?cache=shared&mode=rwc", path[0]))
 		if err != nil {
 			log.Fatal(err)
 		}
