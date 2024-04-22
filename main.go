@@ -9,15 +9,17 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/zigzter/chatterm/db"
 	"github.com/zigzter/chatterm/models"
+	"github.com/zigzter/chatterm/utils"
 )
 
 func main() {
-	f, err := tea.LogToFile("debug.log", "debug")
+	configPath := utils.SetupPath()
+	f, err := tea.LogToFile(configPath+"/debug.log", "debug")
 	if err != nil {
 		log.Fatalf("err: %w", err)
 	}
 	defer f.Close()
-	sql := db.OpenDB()
+	sql := db.OpenDB(configPath)
 	defer sql.Close()
 	db.CreateTables(sql)
 

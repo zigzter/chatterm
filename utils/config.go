@@ -26,7 +26,7 @@ func createConfigDir(path string) error {
 	return nil
 }
 
-func setupPath() string {
+func SetupPath() string {
 	scope := gap.NewScope(gap.User, "chatterm")
 	dirs, err := scope.ConfigDirs()
 	if err != nil {
@@ -46,7 +46,7 @@ func setupPath() string {
 
 // InitConfig sets up the config, creating if necessary.
 func InitConfig() {
-	configPath := setupPath()
+	configPath := SetupPath()
 	viper.SetConfigName("config")
 	viper.SetConfigType("json")
 	viper.AddConfigPath(configPath)
