@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"testing"
 
@@ -12,6 +13,14 @@ import (
 
 var db *sql.DB
 var repo *ChatMessageRepo
+var message1 = types.InsertChat{
+	Username: "gandalf", UserID: "1", Channel: "MiddleEarth",
+	Content: "alls well that ends better", Timestamp: "11:11",
+}
+var message2 = types.InsertChat{
+	Username: "gimli", UserID: "2", Channel: "MiddleEarth",
+	Content: "nobody tosses a dwarf", Timestamp: "11:12",
+}
 
 func TestMain(m *testing.M) {
 	db, err = sql.Open("sqlite3", ":memory:")
@@ -36,12 +45,22 @@ func TestMain(m *testing.M) {
 
 func TestChatMessageRepo(t *testing.T) {
 	t.Run("Test Repo Insertion", func(t *testing.T) {
-		repo.Insert(types.InsertChat{Username: "gandalf", Content: "some text"})
+		repo.Insert(message1)
+		repo.Insert(message2)
 	})
 
 	t.Run("Test Repo Query Build", func(t *testing.T) {
-		got := repo.BuildQuery("all's well that ends better")
-		want := "SELECT username, user_id, channel, content, timestamp FROM chat_messages WHERE content MATCH  all's well that ends better"
+		base := "SELECT username, user_id, channel, content, timestamp FROM chat_messages"
+		got := repo.BuildQuery("alls well that ends better from:gandalf")
+		want := base + " WHERE chat_messages MATCH 'username:gandalf alls well that ends better'"
+		assert.Equal(t, got, want)
+	})
+
+	t.Run("Test Repo Search", func(t *testing.T) {
+		got, err := repo.Search("from:gandalf")
+		fmt.Printf("%+v", message1)
+		assert.NoError(t, err)
+		want := []types.InsertChat{message1}
 		assert.Equal(t, got, want)
 	})
 }

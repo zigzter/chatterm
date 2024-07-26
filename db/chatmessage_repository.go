@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"strings"
 
@@ -42,32 +41,28 @@ func (c *ChatMessageRepo) Insert(msg types.InsertChat) {
 	}
 }
 
-var filterMap = map[string]string{
-	"from": "username",
-	// TODO: Add before, after
-}
-
 func (c *ChatMessageRepo) BuildQuery(input string) string {
 	query := "SELECT username, user_id, channel, content, timestamp FROM chat_messages"
 	queryWords := strings.Split(input, " ")
-	filters := map[string]string{}
 	searchText := ""
+	userFilter := ""
 	for _, word := range queryWords {
 		splitWord := strings.SplitN(word, ":", 2)
 		if len(splitWord) > 1 {
-			filters[splitWord[0]] = splitWord[1]
+			filter := splitWord[0]
+			text := splitWord[1]
+			if filter == "from" {
+				userFilter = "username:" + text
+			}
 		} else {
 			searchText += " " + word
 		}
 	}
-	query += " WHERE content MATCH " + searchText
-	for filter, value := range filters {
-		query += fmt.Sprintf(" WHERE %s MATCH %s", filterMap[filter], value)
-	}
+	query += " WHERE chat_messages MATCH " + "'" + userFilter + searchText + "'"
 	return query
 }
 
-func (c *ChatMessageRepo) Search(input string) ([]string, error) {
+func (c *ChatMessageRepo) Search(input string) ([]types.InsertChat, error) {
 	query := c.BuildQuery(input)
 	rows, err := c.db.Query(query)
 	if err != nil {
@@ -75,13 +70,16 @@ func (c *ChatMessageRepo) Search(input string) ([]string, error) {
 	}
 	defer rows.Close()
 
-	var messages []string
+	var messages []types.InsertChat
 	for rows.Next() {
-		var m string
-		if err := rows.Scan(&m); err != nil {
+		var m types.InsertChat
+		if err := rows.Scan(&m.Username, &m.UserID, &m.Channel, &m.Content, &m.Timestamp); err != nil {
 			return nil, err
 		}
 		messages = append(messages, m)
+	}
+	if err = rows.Err(); err != nil {
+		return messages, err
 	}
 	return messages, nil
 }
