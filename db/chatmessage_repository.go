@@ -2,7 +2,9 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/zigzter/chatterm/types"
 )
@@ -40,10 +42,34 @@ func (c *ChatMessageRepo) Insert(msg types.InsertChat) {
 	}
 }
 
-func (c *ChatMessageRepo) Search(query string) ([]string, error) {
-	stmt := `SELECT username, user_id, channel, content, timestamp
-        FROM chat_messages WHERE chat_messages MATCH ?`
-	rows, err := c.db.Query(stmt, query)
+var filterMap = map[string]string{
+	"from": "username",
+	// TODO: Add before, after
+}
+
+func (c *ChatMessageRepo) BuildQuery(input string) string {
+	query := "SELECT username, user_id, channel, content, timestamp FROM chat_messages"
+	queryWords := strings.Split(input, " ")
+	filters := map[string]string{}
+	searchText := ""
+	for _, word := range queryWords {
+		splitWord := strings.SplitN(word, ":", 2)
+		if len(splitWord) > 1 {
+			filters[splitWord[0]] = splitWord[1]
+		} else {
+			searchText += " " + word
+		}
+	}
+	query += " WHERE content MATCH " + searchText
+	for filter, value := range filters {
+		query += fmt.Sprintf(" WHERE %s MATCH %s", filterMap[filter], value)
+	}
+	return query
+}
+
+func (c *ChatMessageRepo) Search(input string) ([]string, error) {
+	query := c.BuildQuery(input)
+	rows, err := c.db.Query(query)
 	if err != nil {
 		return nil, err
 	}
