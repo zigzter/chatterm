@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"os"
 	"testing"
 
@@ -57,10 +56,20 @@ func TestChatMessageRepo(t *testing.T) {
 	})
 
 	t.Run("Test Repo Search", func(t *testing.T) {
-		got, err := repo.Search("from:gandalf")
-		fmt.Printf("%+v", message1)
-		assert.NoError(t, err)
-		want := []types.InsertChat{message1}
-		assert.Equal(t, got, want)
+		tests := []struct {
+			name  string
+			input string
+			want  []types.InsertChat
+		}{
+			{"Test username search", "from:gandalf", []types.InsertChat{message1}},
+			{"Test text search", "tosses", []types.InsertChat{message2}},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				got, err := repo.Search(tt.input)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			})
+		}
 	})
 }
