@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"github.com/zigzter/chatterm/types"
@@ -44,25 +45,29 @@ func (c *ChatMessageRepo) BuildQuery(input string) string {
 	query := "SELECT username, user_id, channel, content, timestamp FROM chat_messages"
 	queryWords := strings.Split(input, " ")
 	searchText := ""
-	userFilter := ""
+	filters := []string{}
 	for _, word := range queryWords {
 		splitWord := strings.SplitN(word, ":", 2)
 		if len(splitWord) > 1 {
 			filter := splitWord[0]
 			text := splitWord[1]
 			if filter == "from" {
-				userFilter = "username:" + text
+				filters = append(filters, "username:"+text)
+			}
+			if filter == "channel" {
+				filters = append(filters, "channel:"+text)
 			}
 		} else {
 			searchText += " " + word
 		}
 	}
-	query += " WHERE chat_messages MATCH " + "'" + userFilter + searchText + "'"
+	query += " WHERE chat_messages MATCH " + "'" + strings.Join(filters, " ") + searchText + "'"
 	return query
 }
 
 func (c *ChatMessageRepo) Search(input string) ([]types.InsertChat, error) {
 	query := c.BuildQuery(input)
+	fmt.Println(query)
 	rows, err := c.db.Query(query)
 	if err != nil {
 		return nil, err

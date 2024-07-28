@@ -63,6 +63,8 @@ func TestChatMessageRepo(t *testing.T) {
 		}{
 			{"Test username search", "from:gandalf", []types.InsertChat{message1}},
 			{"Test text search", "tosses", []types.InsertChat{message2}},
+			{"Test channel search", "channel:MiddleEarth", []types.InsertChat{message1, message2}},
+			{"Test channel and username search", "from:gimli channel:MiddleEarth", []types.InsertChat{message2}},
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
