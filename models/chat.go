@@ -51,7 +51,7 @@ type ChatModel struct {
 	chatSettings     ChatSettings
 	labelBox         utils.BoxWithLabel
 	currentUser      currentUser
-	chatMessageRepo  db.ChatMessageRepo
+	chatMessageRepo  db.ChatMessageRepository
 	shouldStackInfo  bool
 }
 
@@ -102,7 +102,7 @@ func InitialChatModel(width int, height int) ChatModel {
 		chatSettings: ChatSettings{
 			Slow: "0",
 		},
-		chatMessageRepo: *chatMessageRepo,
+		chatMessageRepo: chatMessageRepo,
 	}
 }
 
@@ -311,13 +311,16 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg := msg.Msg.(type) {
 		case types.ChatMessage:
 			m.messages = append(m.messages, msg)
-			m.chatMessageRepo.Insert(types.InsertChat{
+			err := m.chatMessageRepo.Insert(types.InsertChat{
 				Username:  msg.DisplayName,
 				UserID:    msg.UserId,
 				Channel:   m.channel,
 				Content:   msg.Message,
 				Timestamp: msg.Timestamp,
 			})
+			if err != nil {
+				fmt.Println("Error adding chat to DB:", err.Error())
+			}
 			m.chatContent += utils.FormatChatMessage(msg, width)
 			m.ac.Insert(msg.DisplayName)
 		case types.SubMessage:

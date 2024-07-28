@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"log"
 	"strings"
 
 	"github.com/zigzter/chatterm/types"
@@ -10,21 +9,22 @@ import (
 
 type ChatMessageRepository interface {
 	Insert(msg types.InsertChat) error
-	Search(query string) ([]ChatMessageRepo, error)
+	BuildQuery(input string) string
+	Search(query string) ([]types.InsertChat, error)
 }
 
 type ChatMessageRepo struct {
 	db *sql.DB
 }
 
-func NewChatMessageRepository(db *sql.DB) *ChatMessageRepo {
+func NewChatMessageRepository(db *sql.DB) ChatMessageRepository {
 	if db == nil {
 		panic("chat message repository: missing db")
 	}
 	return &ChatMessageRepo{db: db}
 }
 
-func (c *ChatMessageRepo) Insert(msg types.InsertChat) {
+func (c *ChatMessageRepo) Insert(msg types.InsertChat) error {
 	sqlStatement := `
         INSERT INTO chat_messages (username, user_id, channel, content, timestamp) 
         VALUES (?, ?, ?, ?, ?)`
@@ -36,11 +36,10 @@ func (c *ChatMessageRepo) Insert(msg types.InsertChat) {
 		msg.Content,
 		msg.Timestamp,
 	)
-	if err != nil {
-		log.Fatal("Cannot insert chat message:", err)
-	}
+	return err
 }
 
+// BuildQuery takes a user's search input and turns it into a SELECT statement
 func (c *ChatMessageRepo) BuildQuery(input string) string {
 	query := "SELECT username, user_id, channel, content, timestamp FROM chat_messages"
 	queryWords := strings.Split(input, " ")

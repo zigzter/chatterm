@@ -11,7 +11,7 @@ import (
 )
 
 var db *sql.DB
-var repo *ChatMessageRepo
+var repo ChatMessageRepository
 var message1 = types.InsertChat{
 	Username: "gandalf", UserID: "1", Channel: "MiddleEarth",
 	Content: "alls well that ends better", Timestamp: "11:11",
