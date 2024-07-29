@@ -188,6 +188,27 @@ func sendFollowersRequest(args []string) (*types.FollowersResp, error) {
 	return &followerData, nil
 }
 
+// getUserColor retrieves the target user's chat color from the Twitch API
+func getUserColor(userId string) (*types.ColorResp, error) {
+	cmdDetails := RequestMap[types.Color]
+	url := rootUrl + cmdDetails.Endpoint
+	req, err := http.NewRequest(cmdDetails.Method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req = augmentRequest(req)
+	q := req.URL.Query()
+	q.Add("user_id", userId)
+	req.URL.RawQuery = q.Encode()
+	bytes, err := fireRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	var colorData types.ColorResp
+	json.Unmarshal(bytes, &colorData)
+	return &colorData, nil
+}
+
 // sendInfoRequest hits several API endpoints and returns a single collection of user data
 func sendInfoRequest(username string) (*types.UserInfo, error) {
 	userInfo := types.UserInfo{}
@@ -199,6 +220,11 @@ func sendInfoRequest(username string) (*types.UserInfo, error) {
 		return nil, errors.New("User does not exist")
 	}
 	userInfo.Details = userResp.Data[0]
+	colorData, err := getUserColor(userInfo.Details.ID)
+	if err != nil {
+		log.Println("Error retrieving color of:", userInfo.Details.DisplayName)
+	}
+	userInfo.Color = colorData.Data[0].Color
 	userType := viper.GetString(utils.ChannelUserTypeKey)
 	hasModPrivs := userType == "moderator" || userType == "broadcaster"
 	if !hasModPrivs {

@@ -169,13 +169,15 @@ func (m *ChatModel) ProcessBanResponse(resp *types.UserBanResp, args []string) s
 func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string) {
 	details := resp.Details
 	following := resp.Following
+	color := resp.Color
+	nameColor := lipgloss.NewStyle().Foreground(lipgloss.Color(color))
 	followingText := ""
 	if following.FollowedAt != "" {
 		followingText = "Following since: " + following.FollowedAt
 	}
 	feedback := fmt.Sprintf(
 		"User: {icon}%s\nAccount created: %s\n%s\n",
-		details.DisplayName,
+		nameColor.Render(details.DisplayName),
 		details.CreatedAt,
 		followingText,
 	)
@@ -187,12 +189,12 @@ func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string)
 		m.SetInfoView(feedback)
 		return
 	}
-	// TODO: Set users color and add icon, use Twitch API
+	// TODO: Set users icon, use Twitch API
 	for _, chatMsg := range userChannelHistory {
 		feedback += wordwrap.String(
 			fmt.Sprintf(
 				"%s: %s\n",
-				chatMsg.Username,
+				nameColor.Render(chatMsg.Username),
 				chatMsg.Content,
 			),
 			m.infoview.Width,

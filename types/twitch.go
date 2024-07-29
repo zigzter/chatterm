@@ -20,6 +20,7 @@ type TwitchCommand string
 const (
 	Ban           TwitchCommand = "ban"
 	Info          TwitchCommand = "info"
+	Color         TwitchCommand = "color"
 	Unban         TwitchCommand = "unban"
 	Clear         TwitchCommand = "clear"
 	Delete        TwitchCommand = "delete"
@@ -46,6 +47,7 @@ func (e TwitchAPIError) Error() string {
 
 // UserInfo merges the data from several API calls together
 type UserInfo struct {
+	Color        string
 	Details      UserData
 	Following    FollowersData
 	Subscription SubscriptionData
@@ -153,4 +155,15 @@ type ShieldData struct {
 
 type ShieldResp struct {
 	Data []ShieldData `json:"data"`
+}
+
+type ColorData struct {
+	UserID    string `json:"user_id"`
+	UserName  string `json:"user_name"`
+	UserLogin string `json:"user_login"`
+	Color     string `json:"color"`
+}
+
+type ColorResp struct {
+	Data []ColorData `json:"data"`
 }

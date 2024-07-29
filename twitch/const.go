@@ -64,4 +64,8 @@ var RequestMap = map[types.TwitchCommand]CommandDetails{
 		Endpoint: "/moderation/shield_mode",
 		Method:   "PUT",
 	},
+	types.Color: {
+		Endpoint: "/chat/color",
+		Method:   "GET",
+	},
 }
