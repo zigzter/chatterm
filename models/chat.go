@@ -184,7 +184,7 @@ func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string)
 	icon := ""
 	userChannelHistory, err := m.chatMessageRepo.Search(fmt.Sprintf("from:%s channel:%s", args[0], m.channel))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		feedback += "\n" + err.Error()
 		m.SetInfoView(feedback)
 		return
@@ -321,7 +321,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				Timestamp: msg.Timestamp,
 			})
 			if err != nil {
-				fmt.Println("Error adding chat to DB:", err.Error())
+				log.Println("Error adding chat to DB:", err.Error())
 			}
 			m.chatContent += utils.FormatChatMessage(msg, width)
 			m.ac.Insert(msg.DisplayName)
