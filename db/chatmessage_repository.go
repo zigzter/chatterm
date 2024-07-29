@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
 
 	"github.com/zigzter/chatterm/types"
@@ -67,7 +66,6 @@ func (c *ChatMessageRepo) BuildQuery(input string) string {
 
 func (c *ChatMessageRepo) Search(input string) ([]types.InsertChat, error) {
 	query := c.BuildQuery(input)
-	fmt.Println(query)
 	rows, err := c.db.Query(query)
 	if err != nil {
 		return nil, err

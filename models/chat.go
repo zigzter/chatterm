@@ -173,8 +173,6 @@ func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string)
 	if following.FollowedAt != "" {
 		followingText = "Following since: " + following.FollowedAt
 	}
-	// TODO: instead of getting icon from messages and replacing,
-	// get it from the API, along with username color
 	feedback := fmt.Sprintf(
 		"User: {icon}%s\nAccount created: %s\n%s\n",
 		details.DisplayName,
@@ -182,21 +180,23 @@ func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string)
 		followingText,
 	)
 	icon := ""
-	for _, chatMsg := range m.messages {
-		if chatMsg.DisplayName == args[0] {
-			// TODO: move this out of the loop
-			nameColor := lipgloss.NewStyle().
-				Foreground(lipgloss.Color(chatMsg.Color))
-			icon = utils.GenerateIcon(chatMsg.ChannelUserType)
-			feedback += wordwrap.String(
-				fmt.Sprintf(
-					"%s: %s\n",
-					nameColor.Render(chatMsg.DisplayName),
-					chatMsg.Message,
-				),
-				m.infoview.Width,
-			)
-		}
+	userChannelHistory, err := m.chatMessageRepo.Search(fmt.Sprintf("from:%s channel:%s", args[0], m.channel))
+	if err != nil {
+		fmt.Println(err)
+		feedback += "\n" + err.Error()
+		m.SetInfoView(feedback)
+		return
+	}
+	// TODO: Set users color and add icon, use Twitch API
+	for _, chatMsg := range userChannelHistory {
+		feedback += wordwrap.String(
+			fmt.Sprintf(
+				"%s: %s\n",
+				chatMsg.Username,
+				chatMsg.Content,
+			),
+			m.infoview.Width,
+		)
 	}
 	feedback = strings.Replace(feedback, "{icon}", icon, 1)
 	m.SetInfoView(feedback)
