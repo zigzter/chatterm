@@ -68,8 +68,8 @@ func usernameColorizer(color string) lipgloss.Style {
 }
 
 var (
-	showBadges            bool
-	showTimestamps        bool
+	showBadges            bool = true
+	showTimestamps        bool = true
 	highlightSubs         bool
 	highlightRaids        bool
 	firstTimeChatterColor string
