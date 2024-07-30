@@ -17,7 +17,7 @@ func TestUsernoticeParser(t *testing.T) {
 			Streak:      "1",
 		}
 
-		assert.Equal(t, got, want)
+		assert.Equal(t, want, got)
 	})
 
 	t.Run("Test AnnouncementParser", func(t *testing.T) {
@@ -27,7 +27,7 @@ func TestUsernoticeParser(t *testing.T) {
 			Message:     "You. Shall. Not. Pass!",
 		}
 
-		assert.Equal(t, got, want)
+		assert.Equal(t, want, got)
 	})
 
 	t.Run("Test RaidParser", func(t *testing.T) {
@@ -37,6 +37,6 @@ func TestUsernoticeParser(t *testing.T) {
 			ViewerCount: "15",
 		}
 
-		assert.Equal(t, got, want)
+		assert.Equal(t, want, got)
 	})
 }

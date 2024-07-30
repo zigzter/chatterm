@@ -66,5 +66,5 @@ func TestUserListParser(t *testing.T) {
 		"frodo",
 	}}
 
-	assert.Equal(t, got, want)
+	assert.Equal(t, want, got)
 }

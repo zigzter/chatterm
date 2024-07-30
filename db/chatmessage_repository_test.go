@@ -52,7 +52,7 @@ func TestChatMessageRepo(t *testing.T) {
 		base := "SELECT username, user_id, channel, content, timestamp FROM chat_messages"
 		got := repo.BuildQuery("alls well that ends better from:gandalf")
 		want := base + " WHERE chat_messages MATCH 'username:gandalf alls well that ends better'"
-		assert.Equal(t, got, want)
+		assert.Equal(t, want, got)
 	})
 
 	t.Run("Test Repo Search", func(t *testing.T) {

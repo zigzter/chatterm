@@ -18,5 +18,5 @@ func TestMessageParser(t *testing.T) {
 		Timestamp:       "10:05",
 		UserId:          "20816785",
 	}
-	assert.Equal(t, got, want)
+	assert.Equal(t, want, got)
 }

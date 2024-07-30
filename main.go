@@ -16,7 +16,7 @@ func main() {
 	configPath := utils.SetupPath()
 	f, err := tea.LogToFile(configPath+"/debug.log", "debug")
 	if err != nil {
-		log.Fatalf("err: %w", err)
+		log.Fatalf("err: %s", err)
 	}
 	defer f.Close()
 	sql := db.OpenDB(configPath)
