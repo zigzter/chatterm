@@ -65,6 +65,7 @@ func (c *ChatMessageRepo) BuildQuery(input string) string {
 }
 
 func (c *ChatMessageRepo) Search(input string) ([]types.InsertChat, error) {
+	// TODO: Make sure messages are ordered by time/date, possibly create a separate method for user info chat retrieval
 	query := c.BuildQuery(input)
 	rows, err := c.db.Query(query)
 	if err != nil {

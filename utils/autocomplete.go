@@ -45,24 +45,33 @@ func (t *Trie) UpdateSuggestion(input string) string {
 
 func (t *Trie) Search(prefix string) []string {
 	current := t.Root
-	for _, c := range prefix {
+	for _, c := range strings.ToLower(prefix) {
 		node, ok := current.children[c]
 		if !ok {
 			return nil
 		}
 		current = node
 	}
-	return t.collectNames(current, prefix, []string{})
+	return t.getNames(current, prefix, []string{})
 }
 
-func (t *Trie) collectNames(node *TrieNode, prefix string, words []string) []string {
+func (t *Trie) getNames(node *TrieNode, prefix string, words []string) []string {
 	if node.isName {
 		words = append(words, node.originalNames...)
 	}
 	for c, child := range node.children {
-		words = t.collectNames(child, prefix+string(c), words)
+		words = t.getNames(child, prefix+string(c), words)
 	}
 	return words
+}
+
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
 
 func (t *Trie) Insert(name string) {
@@ -76,7 +85,9 @@ func (t *Trie) Insert(name string) {
 		current = node
 	}
 	current.isName = true
-	current.originalNames = append(current.originalNames, name)
+	if !contains(current.originalNames, name) {
+		current.originalNames = append(current.originalNames, name)
+	}
 }
 
 func (t *Trie) Populate(names []string) {
