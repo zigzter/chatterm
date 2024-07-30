@@ -44,4 +44,14 @@ func TestAutocomplete(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("Test suggestion update", func(t *testing.T) {
+		ac.Search("sa")
+		got := ac.UpdateSuggestion("sa")
+		want := "saruman"
+		assert.Equal(t, want, got)
+		got = ac.UpdateSuggestion("sa")
+		want = "sauron"
+		assert.Equal(t, want, got)
+	})
 }
