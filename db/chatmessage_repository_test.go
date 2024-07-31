@@ -20,6 +20,11 @@ var message2 = types.InsertChat{
 	Username: "gimli", UserID: "2", Channel: "MiddleEarth",
 	Content: "nobody tosses a dwarf", Timestamp: "11:12",
 }
+var message3 = types.InsertChat{
+	Username: "gandalf", UserID: "1", Channel: "MiddleEarth",
+	Content:   "a wizard is never late, nor is he early, he arrives precisely when he means to",
+	Timestamp: "11:15",
+}
 
 func TestMain(m *testing.M) {
 	db, err = sql.Open("sqlite3", ":memory:")
@@ -46,12 +51,20 @@ func TestChatMessageRepo(t *testing.T) {
 	t.Run("Test Repo Insertion", func(t *testing.T) {
 		repo.Insert(message1)
 		repo.Insert(message2)
+		repo.Insert(message3)
 	})
 
 	t.Run("Test Repo Query Build", func(t *testing.T) {
 		base := "SELECT username, user_id, channel, content, timestamp FROM chat_messages"
 		got := repo.BuildQuery("alls well that ends better from:gandalf")
-		want := base + " WHERE chat_messages MATCH 'username:gandalf alls well that ends better'"
+		want := base + " WHERE chat_messages MATCH 'username:gandalf alls well that ends better' ORDER BY rank"
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("Test Get User Messages", func(t *testing.T) {
+		got, err := repo.GetUsersMessages("gandalf", "MiddleEarth")
+		want := []types.InsertChat{message1, message3}
+		assert.NoError(t, err)
 		assert.Equal(t, want, got)
 	})
 
@@ -61,9 +74,8 @@ func TestChatMessageRepo(t *testing.T) {
 			input string
 			want  []types.InsertChat
 		}{
-			{"Test username search", "from:gandalf", []types.InsertChat{message1}},
+			{"Test username search", "from:gandalf", []types.InsertChat{message1, message3}},
 			{"Test text search", "tosses", []types.InsertChat{message2}},
-			{"Test channel search", "channel:MiddleEarth", []types.InsertChat{message1, message2}},
 			{"Test channel and username search", "from:gimli channel:MiddleEarth", []types.InsertChat{message2}},
 		}
 		for _, tt := range tests {

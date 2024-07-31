@@ -261,7 +261,11 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				res, _ := m.chatMessageRepo.Search(strings.Join(args, " "))
 				resString := ""
 				for _, chat := range res {
-					resString += fmt.Sprintf("[%s]%s: %s\n", chat.Channel, chat.Username, chat.Content)
+					resString += fmt.Sprintf(
+						"[%s][%s]%s: %s\n",
+						chat.Timestamp, chat.Channel,
+						chat.Username, chat.Content,
+					)
 				}
 				m.SetInfoView(resString)
 			} else if isCommand {

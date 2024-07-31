@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"github.com/zigzter/chatterm/types"
@@ -11,6 +12,7 @@ type ChatMessageRepository interface {
 	Insert(msg types.InsertChat) error
 	BuildQuery(input string) string
 	Search(query string) ([]types.InsertChat, error)
+	GetUsersMessages(username, channel string) ([]types.InsertChat, error)
 }
 
 type ChatMessageRepo struct {
@@ -61,12 +63,10 @@ func (c *ChatMessageRepo) BuildQuery(input string) string {
 		}
 	}
 	query += " WHERE chat_messages MATCH " + "'" + strings.Join(filters, " ") + searchText + "'"
-	return query
+	return query + " ORDER BY rank"
 }
 
-func (c *ChatMessageRepo) Search(input string) ([]types.InsertChat, error) {
-	// TODO: Make sure messages are ordered by time/date, possibly create a separate method for user info chat retrieval
-	query := c.BuildQuery(input)
+func (c *ChatMessageRepo) GetResults(query string) ([]types.InsertChat, error) {
 	rows, err := c.db.Query(query)
 	if err != nil {
 		return nil, err
@@ -85,4 +85,24 @@ func (c *ChatMessageRepo) Search(input string) ([]types.InsertChat, error) {
 		return messages, err
 	}
 	return messages, nil
+}
+
+// Search allows the user to search the chat DB for messages
+func (c *ChatMessageRepo) Search(input string) ([]types.InsertChat, error) {
+	query := c.BuildQuery(input)
+	return c.GetResults(query)
+}
+
+// GetUsersMessages retrieves all messages from the given user in the given channel.
+// We want to sort this by the timestamp, not the rank, therefore it's a separate method.
+func (c *ChatMessageRepo) GetUsersMessages(username, channel string) ([]types.InsertChat, error) {
+	query := fmt.Sprintf(
+		`SELECT username, user_id, channel, content, timestamp
+        FROM chat_messages
+        WHERE chat_messages MATCH 'username:%s channel:%s'
+        ORDER BY timestamp ASC`,
+		username,
+		channel,
+	)
+	return c.GetResults(query)
 }
