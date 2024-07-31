@@ -182,7 +182,7 @@ func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string)
 		followingText,
 	)
 	icon := ""
-	userChannelHistory, err := m.chatMessageRepo.Search(fmt.Sprintf("from:%s channel:%s", args[0], m.channel))
+	userChannelHistory, err := m.chatMessageRepo.GetUsersMessages(args[0], m.channel)
 	if err != nil {
 		log.Println(err)
 		feedback += "\n" + err.Error()
@@ -193,7 +193,8 @@ func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string)
 	for _, chatMsg := range userChannelHistory {
 		feedback += wordwrap.String(
 			fmt.Sprintf(
-				"%s: %s\n",
+				"[%s]%s: %s\n",
+				chatMsg.Timestamp,
 				nameColor.Render(chatMsg.Username),
 				chatMsg.Content,
 			),
