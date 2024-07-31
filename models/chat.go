@@ -257,6 +257,13 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if isCommand && command == "watch" {
 				responseMsg := utils.WatchUser(strings.ToLower(args[0]))
 				m.chatContent += responseMsg + "\n"
+			} else if isCommand && command == "search" {
+				res, _ := m.chatMessageRepo.Search(strings.Join(args, " "))
+				resString := ""
+				for _, chat := range res {
+					resString += fmt.Sprintf("[%s]%s: %s\n", chat.Channel, chat.Username, chat.Content)
+				}
+				m.SetInfoView(resString)
 			} else if isCommand {
 				var feedback string
 				res, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
@@ -385,7 +392,7 @@ func (m ChatModel) renderInfoView() string {
 		Render(m.channel, m.viewport.View())
 	infoview := m.labelBox.
 		SetWidth(m.infoview.Width).
-		Render("User info", m.infoview.View())
+		Render("Results", m.infoview.View())
 	combinedView := ""
 	joinArgs := []string{viewport, infoview}
 	if m.shouldStackInfo {
