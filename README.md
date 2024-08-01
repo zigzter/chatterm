@@ -8,24 +8,23 @@ Twitch chat in the terminal, with moderator actions.
 
 ![Chat app channel input image](./channel_input.png)
 
-### Features
-
+## ⚡ Features
 - View and send messages.
 - Built-in authentication via Twitch.
 - Ban & timeout users, clear chat, query user info
+- Search received messsages, powered by the FTS5 extension of SQLite
 - Username autocomplete on `@` mentions and `/` commands, triggered by pressing tab.
 
-### Tech Used
+## 🔧 Tech Used
 - Bubble Tea for the terminal UI
 - Gorilla WebSocket for the websocket connection
 - SQLite for storage
 - Viper for configuration
 
-### Supported Platforms
+## 🖥️ Supported Platforms
 Currently only tested on Linux. macOS might work if you build it yourself.
 
-### Installation
-
+## 📦 Installation
 Cloning option (requires Go):
 1. `git clone https://github.com/zigzter/chatterm.git`
 2. `cd chatterm`
@@ -37,11 +36,17 @@ If you have to re-auth for whatever reason, and the oauth request gets stuck loa
 Downloading binary option:
 Simply download the binary and run `./chatterm`
 
-### Supported Commands
+## 🚀 Supported Commands
 - Ban a user: `/ban username`
 - Timeout a user: `/ban username timeInSeconds`
-- Clear chat: `/clear`
+- Search for messages: `/search something to search`
+    - `from:username` restricts search to messages sent by that user
+    - `channel:channelName` restricts search to messages in that channel
+    - Supports wildcards and is case insensitive: `kek*` will find `KEKW`
+    - This search queries the local DB, so it will only find messages that you've received while in the chat rooms
+- Clear chat: `/clear` (this is the moderator clear, not a local one)
 - Get a user's info: `/info username`
+- Give a streamer a shoutout: `/shoutout username` (untested, only works if the channel you're in is live)
 - Enable/disable shield mode: `/shield on|off`
 - Watch a user (highlight their messages): `/watch username`
     - To remove the user, re-run the command
