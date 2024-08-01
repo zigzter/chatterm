@@ -28,6 +28,7 @@ const (
 	SubOnly       TwitchCommand = "subonly"
 	Shield        TwitchCommand = "shield"
 	EmoteOnly     TwitchCommand = "emoteonly"
+	Shoutout      TwitchCommand = "shoutout"
 	FollowersOnly TwitchCommand = "followers"
 	User          TwitchCommand = "user"
 	Subscription  TwitchCommand = "subscription"

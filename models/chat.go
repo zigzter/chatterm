@@ -106,7 +106,7 @@ func InitialChatModel(width int, height int) ChatModel {
 	}
 }
 
-var autocompletePrefixes = [5]string{"/ban ", "/unban ", "/info ", "@", "/watch "}
+var autocompletePrefixes = [6]string{"/ban ", "/unban ", "/info ", "@", "/watch ", "/shoutout "}
 
 // shouldAutocomplete confirms whether autocomplete should trigger,
 // and returns the prefix for re-use when setting textinput value.

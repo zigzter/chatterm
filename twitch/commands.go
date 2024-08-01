@@ -71,7 +71,7 @@ func fireRequest(req *http.Request) ([]byte, error) {
 func isValidCommand(command string) bool {
 	switch types.TwitchCommand(command) {
 	case types.Ban, types.Clear, types.Unban, types.Delete, types.Info, types.Shield,
-		types.FollowersOnly, types.SubOnly, types.Slow, types.EmoteOnly:
+		types.FollowersOnly, types.SubOnly, types.Slow, types.EmoteOnly, types.Shoutout:
 		return true
 	}
 	return false
@@ -91,6 +91,8 @@ func SendTwitchCommand(command types.TwitchCommand, args []string) (interface{},
 		return sendInfoRequest(args[0])
 	case types.Clear:
 		return sendClearRequest()
+	case types.Shoutout:
+		return sendShoutout(args[0])
 	case types.Delete:
 		return sendDeleteRequest(args)
 	case types.Shield:
@@ -138,7 +140,6 @@ func sendUpdateChatRequest(mode types.TwitchCommand, duration string) (*types.Up
 		return nil, err
 	}
 	req = augmentRequest(req)
-	log.Println(req.URL.String())
 	bytes, err := fireRequest(req)
 	if err != nil {
 		return nil, err
@@ -385,4 +386,37 @@ func sendShieldRequest(args []string) (*types.ShieldResp, error) {
 	var shieldResponse types.ShieldResp
 	json.Unmarshal(bytes, &shieldResponse)
 	return &shieldResponse, nil
+}
+
+func sendShoutout(username string) (any, error) {
+	sql := db.OpenDB()
+	targetUserId, err := db.GetUserId(sql, username)
+	if err != nil {
+		return nil, err
+	}
+	if targetUserId == "" {
+		user, err := SendUserRequest(username)
+		if err != nil {
+			return nil, err
+		}
+		targetUserId = user.Data[0].ID
+		db.InsertUserMap(sql, username, targetUserId)
+	}
+	originUserId := viper.GetString(utils.ChannelIDKey)
+	cmdDetails := RequestMap[types.Shoutout]
+	url := rootUrl + cmdDetails.Endpoint
+	req, err := http.NewRequest(cmdDetails.Method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req = augmentRequest(req)
+	q := req.URL.Query()
+	q.Add("from_broadcaster_id", originUserId)
+	q.Add("to_broadcaster_id", targetUserId)
+	req.URL.RawQuery = q.Encode()
+	bytes, err := fireRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	return bytes, nil
 }

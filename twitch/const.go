@@ -68,4 +68,8 @@ var RequestMap = map[types.TwitchCommand]CommandDetails{
 		Endpoint: "/chat/color",
 		Method:   "GET",
 	},
+	types.Shoutout: {
+		Endpoint: "/chat/shoutouts",
+		Method:   "POST",
+	},
 }
