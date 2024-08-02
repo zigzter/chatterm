@@ -38,21 +38,6 @@ func httpClient() *http.Client {
 	return clientInstance
 }
 
-// augmentRequest adds the broadcaster_id and moderator_id query params,
-// as well as setting auth and client id headers.
-func augmentRequest(req *http.Request) *http.Request {
-	channelid := viper.GetString(utils.ChannelIDKey)
-	moderatorId := viper.GetString(utils.UserIDKey)
-	token := viper.GetString(utils.TokenKey)
-	query := req.URL.Query()
-	query.Add("broadcaster_id", channelid)
-	query.Add("moderator_id", moderatorId)
-	req.URL.RawQuery = query.Encode()
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Client-Id", ClientId)
-	return req
-}
-
 func fireRequest(req *http.Request) ([]byte, error) {
 	client := httpClient()
 	resp, err := client.Do(req)
@@ -66,6 +51,59 @@ func fireRequest(req *http.Request) ([]byte, error) {
 		return nil, errors.New(string(bodyBytes))
 	}
 	return bodyBytes, nil
+}
+
+type APIRequest struct {
+	Method  string
+	URL     string
+	Headers map[string]string
+	Query   map[string]string
+	Body    []byte
+}
+
+func NewAPIRequest(method, url string, body []byte) *APIRequest {
+	channelID := viper.GetString(utils.ChannelIDKey)
+	moderatorID := viper.GetString(utils.UserIDKey)
+	token := viper.GetString(utils.TokenKey)
+	return &APIRequest{
+		Method: method,
+		URL:    url,
+		Headers: map[string]string{
+			"Authorization": "Bearer " + token,
+			"Client-Id":     ClientId,
+		},
+		Query: map[string]string{
+			"moderator_id":   moderatorID,
+			"broadcaster_id": channelID,
+		},
+		Body: body,
+	}
+}
+
+func (req *APIRequest) AddHeader(key, value string) *APIRequest {
+	req.Headers[key] = value
+	return req
+}
+
+func (req *APIRequest) AddQuery(key, value string) *APIRequest {
+	req.Query[key] = value
+	return req
+}
+
+func (req *APIRequest) Execute() ([]byte, error) {
+	httpReq, err := http.NewRequest(req.Method, req.URL, bytes.NewBuffer(req.Body))
+	if err != nil {
+		return nil, err
+	}
+	for key, value := range req.Headers {
+		httpReq.Header.Set(key, value)
+	}
+	query := httpReq.URL.Query()
+	for key, value := range req.Query {
+		query.Add(key, value)
+	}
+	httpReq.URL.RawQuery = query.Encode()
+	return fireRequest(httpReq)
 }
 
 func isValidCommand(command string) bool {
@@ -134,58 +172,42 @@ func sendUpdateChatRequest(mode types.TwitchCommand, duration string) (*types.Up
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"data": bodyData,
 	})
-	req, err := http.NewRequest(cmdDetails.Method, url, bytes.NewBuffer(requestBody))
-	req.Header.Set("Content-Type", "application/json")
-	if err != nil {
-		return nil, err
-	}
-	req = augmentRequest(req)
-	bytes, err := fireRequest(req)
+	response, err := NewAPIRequest(cmdDetails.Method, url, requestBody).
+		AddHeader("Content-Type", "application/json").
+		Execute()
 	if err != nil {
 		return nil, err
 	}
 	var updateChatSettingsData types.UpdateChatSettingsData
-	json.Unmarshal(bytes, &updateChatSettingsData)
+	json.Unmarshal(response, &updateChatSettingsData)
 	return &updateChatSettingsData, nil
 }
 
 func SendUserRequest(username string) (*types.UserResp, error) {
 	cmdDetails := RequestMap[types.User]
 	url := rootUrl + cmdDetails.Endpoint
-	req, err := http.NewRequest(cmdDetails.Method, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	req = augmentRequest(req)
-	query := req.URL.Query()
-	query.Add("login", username)
-	req.URL.RawQuery = query.Encode()
-	bytes, err := fireRequest(req)
+	response, err := NewAPIRequest(cmdDetails.Method, url, nil).
+		AddQuery("login", username).
+		Execute()
 	if err != nil {
 		return nil, err
 	}
 	var userData types.UserResp
-	json.Unmarshal(bytes, &userData)
+	json.Unmarshal(response, &userData)
 	return &userData, nil
 }
 
 func sendFollowersRequest(args []string) (*types.FollowersResp, error) {
 	cmdDetails := RequestMap[types.GetFollowers]
 	url := rootUrl + cmdDetails.Endpoint
-	req, err := http.NewRequest(cmdDetails.Method, url, nil)
-	req = augmentRequest(req)
-	q := req.URL.Query()
-	q.Add("user_id", args[0])
-	req.URL.RawQuery = q.Encode()
-	if err != nil {
-		return nil, err
-	}
-	bytes, err := fireRequest(req)
+	response, err := NewAPIRequest(cmdDetails.Method, url, nil).
+		AddQuery("user_id", args[0]).
+		Execute()
 	if err != nil {
 		return nil, err
 	}
 	var followerData types.FollowersResp
-	json.Unmarshal(bytes, &followerData)
+	json.Unmarshal(response, &followerData)
 	return &followerData, nil
 }
 
@@ -193,20 +215,14 @@ func sendFollowersRequest(args []string) (*types.FollowersResp, error) {
 func getUserColor(userId string) (*types.ColorResp, error) {
 	cmdDetails := RequestMap[types.Color]
 	url := rootUrl + cmdDetails.Endpoint
-	req, err := http.NewRequest(cmdDetails.Method, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	req = augmentRequest(req)
-	q := req.URL.Query()
-	q.Add("user_id", userId)
-	req.URL.RawQuery = q.Encode()
-	bytes, err := fireRequest(req)
+	response, err := NewAPIRequest(cmdDetails.Method, url, nil).
+		AddQuery("user_id", userId).
+		Execute()
 	if err != nil {
 		return nil, err
 	}
 	var colorData types.ColorResp
-	json.Unmarshal(bytes, &colorData)
+	json.Unmarshal(response, &colorData)
 	return &colorData, nil
 }
 
@@ -245,20 +261,14 @@ func sendInfoRequest(username string) (*types.UserInfo, error) {
 func SendLiveChannelsRequest(userID string) (*types.LiveChannelsResp, error) {
 	cmdDetails := RequestMap[types.LiveChannels]
 	url := rootUrl + cmdDetails.Endpoint
-	req, err := http.NewRequest(cmdDetails.Method, url, nil)
-	req = augmentRequest(req)
-	q := req.URL.Query()
-	q.Add("user_id", userID)
-	req.URL.RawQuery = q.Encode()
-	if err != nil {
-		return nil, err
-	}
-	bytes, err := fireRequest(req)
+	response, err := NewAPIRequest(cmdDetails.Method, url, nil).
+		AddQuery("user_id", userID).
+		Execute()
 	if err != nil {
 		return nil, err
 	}
 	var liveChannels types.LiveChannelsResp
-	json.Unmarshal(bytes, &liveChannels)
+	json.Unmarshal(response, &liveChannels)
 	return &liveChannels, nil
 }
 
@@ -286,15 +296,14 @@ func sendBanRequest(args []string) (*types.UserBanResp, error) {
 	requestBody, err := json.Marshal(map[string]map[string]string{
 		"data": {"user_id": userId, "duration": duration},
 	})
-	req, err := http.NewRequest(cmdDetails.Method, url, bytes.NewBuffer(requestBody))
-	req.Header.Set("Content-Type", "application/json")
-	req = augmentRequest(req)
-	bytes, err := fireRequest(req)
+	response, err := NewAPIRequest(cmdDetails.Method, url, requestBody).
+		AddHeader("Content-Type", "application/json").
+		Execute()
 	if err != nil {
 		return nil, err
 	}
 	var banResponse types.UserBanResp
-	json.Unmarshal(bytes, &banResponse)
+	json.Unmarshal(response, &banResponse)
 	return &banResponse, nil
 }
 
@@ -316,31 +325,24 @@ func sendUnbanRequest(args []string) (any, error) {
 		userId = user.Data[0].ID
 		db.InsertUserMap(sql, targetUser, userId)
 	}
-	req, err := http.NewRequest(cmdDetails.Method, url, nil)
-	q := req.URL.Query()
-	q.Add("user_id", userId)
-	req.URL.RawQuery = q.Encode()
-	req = augmentRequest(req)
-	bytes, err := fireRequest(req)
+	response, err := NewAPIRequest(cmdDetails.Method, url, nil).
+		AddQuery("user_id", userId).
+		Execute()
 	if err != nil {
 		return nil, err
 	}
-	return bytes, nil
+	return response, nil
 }
 
 func sendClearRequest() (any, error) {
 	cmdDetails := RequestMap[types.Clear]
 	url := rootUrl + cmdDetails.Endpoint
-	req, err := http.NewRequest(cmdDetails.Method, url, nil)
+	response, err := NewAPIRequest(cmdDetails.Method, url, nil).
+		Execute()
 	if err != nil {
 		return nil, err
 	}
-	req = augmentRequest(req)
-	bytes, err := fireRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	return bytes, nil
+	return response, nil
 }
 
 func sendDeleteRequest(args []string) (any, error) {
@@ -349,16 +351,13 @@ func sendDeleteRequest(args []string) (any, error) {
 	if len(args) < 1 {
 		return nil, errors.New("Please provide the id of the message to delete")
 	}
-	req, err := http.NewRequest(cmdDetails.Method, url, nil)
-	q := req.URL.Query()
-	q.Add("message_id", args[0])
-	req.URL.RawQuery = q.Encode()
-	req = augmentRequest(req)
-	bytes, err := fireRequest(req)
+	response, err := NewAPIRequest(cmdDetails.Method, url, nil).
+		AddQuery("message_id", args[0]).
+		Execute()
 	if err != nil {
 		return nil, err
 	}
-	return bytes, nil
+	return response, nil
 }
 
 func sendShieldRequest(args []string) (*types.ShieldResp, error) {
@@ -376,15 +375,14 @@ func sendShieldRequest(args []string) (*types.ShieldResp, error) {
 		enable = false
 	}
 	requestBody, err := json.Marshal(map[string]bool{"is_active": enable})
-	req, err := http.NewRequest(cmdDetails.Method, url, bytes.NewBuffer(requestBody))
-	req.Header.Set("Content-Type", "application/json")
-	req = augmentRequest(req)
-	bytes, err := fireRequest(req)
+	response, err := NewAPIRequest(cmdDetails.Method, url, requestBody).
+		AddHeader("Content-Type", "application/json").
+		Execute()
 	if err != nil {
 		return nil, err
 	}
 	var shieldResponse types.ShieldResp
-	json.Unmarshal(bytes, &shieldResponse)
+	json.Unmarshal(response, &shieldResponse)
 	return &shieldResponse, nil
 }
 
@@ -405,18 +403,12 @@ func sendShoutout(username string) (any, error) {
 	originUserId := viper.GetString(utils.ChannelIDKey)
 	cmdDetails := RequestMap[types.Shoutout]
 	url := rootUrl + cmdDetails.Endpoint
-	req, err := http.NewRequest(cmdDetails.Method, url, nil)
+	response, err := NewAPIRequest(cmdDetails.Method, url, nil).
+		AddQuery("from_broadcaster_id", originUserId).
+		AddQuery("to_broadcaster_id", targetUserId).
+		Execute()
 	if err != nil {
 		return nil, err
 	}
-	req = augmentRequest(req)
-	q := req.URL.Query()
-	q.Add("from_broadcaster_id", originUserId)
-	q.Add("to_broadcaster_id", targetUserId)
-	req.URL.RawQuery = q.Encode()
-	bytes, err := fireRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	return bytes, nil
+	return response, nil
 }
