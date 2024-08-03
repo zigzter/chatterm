@@ -189,6 +189,7 @@ func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string)
 		m.SetInfoView(feedback)
 		return
 	}
+	// TODO: Group messages by date
 	// TODO: Set users icon, use Twitch API
 	for _, chatMsg := range userChannelHistory {
 		feedback += wordwrap.String(

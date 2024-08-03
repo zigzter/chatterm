@@ -6,6 +6,7 @@ import (
 )
 
 func ParseTimestamp(timestamp string) string {
+	// TODO: Add date, currently only returns time
 	unixTime, err := strconv.ParseInt(timestamp, 10, 64)
 	if err != nil {
 		return "00:00"

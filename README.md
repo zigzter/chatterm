@@ -43,6 +43,7 @@ Simply download the binary and run `./chatterm`
     - `from:username` restricts search to messages sent by that user
     - `channel:channelName` restricts search to messages in that channel
     - Supports wildcards and is case insensitive: `kek*` will find `KEKW`
+    - Supports `AND`, `NOT`, and `OR` keywords. `/search tf2 OR ow2` will find all messages that contain at least one of those
     - This search queries the local DB, so it will only find messages that you've received while in the chat rooms
 - Clear chat: `/clear` (this is the moderator clear, not a local one)
 - Get a user's info: `/info username`
