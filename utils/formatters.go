@@ -114,7 +114,7 @@ func FormatChatMessage(message types.ChatMessage, width int) string {
 	}
 	timestamp := ""
 	if showTimestamps {
-		timestamp = "[" + message.Timestamp + "]"
+		timestamp = "[" + ParseTimestamp(message.Timestamp).Time + "]"
 	}
 	box := NewBoxWithLabel(firstTimeChatterColor)
 	msg := fmt.Sprintf(

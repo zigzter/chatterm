@@ -34,6 +34,6 @@ var (
 		IsFirstMessage:  false,
 		ChannelUserType: "moderator",
 		Message:         "All we have to decide is what to do with the time that is given to us.",
-		Timestamp:       "10:05",
+		Timestamp:       "1703527538237",
 	}
 )

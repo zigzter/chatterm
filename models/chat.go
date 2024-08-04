@@ -189,18 +189,28 @@ func (m *ChatModel) ProcessUserInfoResponse(resp *types.UserInfo, args []string)
 		m.SetInfoView(feedback)
 		return
 	}
-	// TODO: Group messages by date
-	// TODO: Set users icon, use Twitch API
+	groupedByDateMsgs := make(map[string][]types.InsertChat)
 	for _, chatMsg := range userChannelHistory {
-		feedback += wordwrap.String(
-			fmt.Sprintf(
-				"[%s]%s: %s\n",
-				chatMsg.Timestamp,
-				nameColor.Render(chatMsg.Username),
-				chatMsg.Content,
-			),
-			m.infoview.Width,
-		)
+		date := utils.ParseTimestamp(chatMsg.Timestamp).Date
+		if _, exists := groupedByDateMsgs[date]; !exists {
+			groupedByDateMsgs[date] = []types.InsertChat{}
+		}
+		groupedByDateMsgs[date] = append(groupedByDateMsgs[date], chatMsg)
+	}
+	// TODO: Set users icon, use Twitch API
+	for date, messages := range groupedByDateMsgs {
+		feedback += fmt.Sprintf("[%s]\n", date)
+		for _, chatMsg := range messages {
+			feedback += wordwrap.String(
+				fmt.Sprintf(
+					"[%s]%s: %s\n",
+					utils.ParseTimestamp(chatMsg.Timestamp).Time,
+					nameColor.Render(chatMsg.Username),
+					chatMsg.Content,
+				),
+				m.infoview.Width,
+			)
+		}
 	}
 	feedback = strings.Replace(feedback, "{icon}", icon, 1)
 	m.SetInfoView(feedback)
@@ -263,10 +273,11 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				res, _ := m.chatMessageRepo.Search(strings.Join(args, " "))
 				resString := ""
 				for _, chat := range res {
+					parsedTimestamp := utils.ParseTimestamp(chat.Timestamp)
 					resString += fmt.Sprintf(
-						"[%s][%s]%s: %s\n",
-						chat.Timestamp, chat.Channel,
-						chat.Username, chat.Content,
+						"%s [%s][%s]%s: %s\n",
+						parsedTimestamp.Date, parsedTimestamp.Time,
+						chat.Channel, chat.Username, chat.Content,
 					)
 				}
 				m.SetInfoView(resString)

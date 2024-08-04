@@ -45,7 +45,7 @@ func MessageParser(input string) types.ChatMessage {
 				}
 				chatMessage.ChannelUserType = channelUserType
 			case "tmi-sent-ts":
-				chatMessage.Timestamp = ParseTimestamp(value)
+				chatMessage.Timestamp = value
 			}
 		}
 	}

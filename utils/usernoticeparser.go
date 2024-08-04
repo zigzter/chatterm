@@ -31,7 +31,7 @@ func UsernoticeParser(input string) types.Message {
 	}
 	var newMap types.MessageKVMap
 	json.Unmarshal(jsonBytes, &newMap)
-	newMap.Timestamp = ParseTimestamp(tagMap["tmi-sent-ts"])
+	newMap.Timestamp = ParseTimestamp(tagMap["tmi-sent-ts"]).Time
 	switch tagMap["msg-id"] {
 	case "announcement":
 		return AnnouncementParser(newMap)

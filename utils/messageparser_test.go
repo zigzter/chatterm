@@ -15,7 +15,7 @@ func TestMessageParser(t *testing.T) {
 		IsFirstMessage:  false,
 		ChannelUserType: "moderator",
 		Message:         "All we have to decide is what to do with the time that is given to us.",
-		Timestamp:       "10:05",
+		Timestamp:       "1703527538237",
 		UserId:          "20816785",
 	}
 	assert.Equal(t, want, got)
