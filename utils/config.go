@@ -59,7 +59,7 @@ func InitConfig() {
 			viper.Set(ShowTimestampsKey, true)
 			viper.Set(HighlightSubsKey, true)
 			viper.Set(HighlightRaidsKey, true)
-			viper.Set(FirstTimeChatterColorKey, "e64553")
+			viper.Set(FirstTimeChatterColorKey, "#e64553")
 			if err := viper.SafeWriteConfig(); err != nil {
 				log.Println("Error creating config file:", err)
 			}
