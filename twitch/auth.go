@@ -58,6 +58,7 @@ func PromptTwitchAuth() tea.Cmd {
 			"moderator:manage:banned_users",
 			"moderator:manage:chat_settings",
 			"moderator:read:followers",
+			"moderator:manage:warnings",
 			"moderator:manage:shoutouts",
 			"moderator:manage:shield_mode",
 		}

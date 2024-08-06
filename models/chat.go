@@ -108,7 +108,7 @@ func InitialChatModel(width int, height int) ChatModel {
 	}
 }
 
-var autocompletePrefixes = [6]string{"/ban ", "/unban ", "/info ", "@", "/watch ", "/shoutout "}
+var autocompletePrefixes = [7]string{"/ban ", "/unban ", "/info ", "@", "/watch ", "/shoutout ", "/warn "}
 
 // shouldAutocomplete confirms whether autocomplete should trigger,
 // and returns the prefix for re-use when setting textinput value.
@@ -305,6 +305,14 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					case *types.UserInfo:
 						m.ProcessUserInfoResponse(resp, args)
 						return m, listenToWebSocket(m.msgChan)
+					case *types.WarnResp:
+						res := resp.Data[0]
+						dbInstance := db.OpenDB()
+						username, err := db.GetUsername(dbInstance, res.UserID)
+						if err != nil {
+							username = "<null>"
+						}
+						feedback += fmt.Sprintf("Warned user %s with reason: %s", username, res.Reason)
 					case nil:
 						// TODO: find a better way to do this?
 						feedback = fmt.Sprintf("Successfully ran %s command\n", command)

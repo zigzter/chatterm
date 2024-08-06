@@ -20,6 +20,7 @@ type TwitchCommand string
 const (
 	Ban           TwitchCommand = "ban"
 	Info          TwitchCommand = "info"
+	Warn          TwitchCommand = "warn"
 	Color         TwitchCommand = "color"
 	Unban         TwitchCommand = "unban"
 	Clear         TwitchCommand = "clear"
@@ -167,4 +168,15 @@ type ColorData struct {
 
 type ColorResp struct {
 	Data []ColorData `json:"data"`
+}
+
+type WarnData struct {
+	BroadcasterID string `json:"broadcaster_id"`
+	UserID        string `json:"user_id"`
+	ModeratorID   string `json:"moderator_id"`
+	Reason        string `json:"reason"`
+}
+
+type WarnResp struct {
+	Data []WarnData `json:"data"`
 }

@@ -15,6 +15,20 @@ func InsertUserMap(db *sql.DB, username, userID string) {
 	}
 }
 
+func GetUsername(db *sql.DB, userID string) (string, error) {
+	var username string
+	sqlStatement := "SELECT username FROM userid_map WHERE user_id = ? LIMIT 1"
+	row := db.QueryRow(sqlStatement, userID)
+	err := row.Scan(&username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", err
+	}
+	return username, nil
+}
+
 func GetUserId(db *sql.DB, username string) (string, error) {
 	var userId string
 	sqlStatement := "SELECT user_id FROM userid_map WHERE username = ? LIMIT 1"

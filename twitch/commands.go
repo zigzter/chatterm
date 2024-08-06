@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -108,8 +109,10 @@ func (req *APIRequest) Execute() ([]byte, error) {
 
 func isValidCommand(command string) bool {
 	switch types.TwitchCommand(command) {
-	case types.Ban, types.Clear, types.Unban, types.Delete, types.Info, types.Shield,
-		types.FollowersOnly, types.SubOnly, types.Slow, types.EmoteOnly, types.Shoutout:
+	case types.Ban, types.Clear, types.Unban, types.Delete,
+		types.Info, types.Shield,
+		types.FollowersOnly, types.SubOnly, types.Slow,
+		types.EmoteOnly, types.Shoutout, types.Warn:
 		return true
 	}
 	return false
@@ -135,6 +138,8 @@ func SendTwitchCommand(command types.TwitchCommand, args []string) (interface{},
 		return sendDeleteRequest(args)
 	case types.Shield:
 		return sendShieldRequest(args)
+	case types.Warn:
+		return sendWarning(args[0], strings.Join(args[1:], " "))
 	case types.Slow, types.SubOnly, types.FollowersOnly:
 		var duration string
 		if len(args) > 0 {
@@ -411,4 +416,34 @@ func sendShoutout(username string) (any, error) {
 		return nil, err
 	}
 	return response, nil
+}
+
+func sendWarning(username, reason string) (*types.WarnResp, error) {
+	sql := db.OpenDB()
+	targetUserId, err := db.GetUserId(sql, username)
+	if err != nil {
+		return nil, err
+	}
+	if targetUserId == "" {
+		user, err := SendUserRequest(username)
+		if err != nil {
+			return nil, err
+		}
+		targetUserId = user.Data[0].ID
+		db.InsertUserMap(sql, username, targetUserId)
+	}
+	cmdDetails := RequestMap[types.Warn]
+	url := rootUrl + cmdDetails.Endpoint
+	requestBody, err := json.Marshal(map[string]map[string]string{
+		"data": {"user_id": targetUserId, "reason": reason},
+	})
+	response, err := NewAPIRequest(cmdDetails.Method, url, requestBody).
+		AddHeader("Content-Type", "application/json").
+		Execute()
+	if err != nil {
+		return nil, err
+	}
+	var warnResponse types.WarnResp
+	json.Unmarshal(response, &warnResponse)
+	return &warnResponse, nil
 }

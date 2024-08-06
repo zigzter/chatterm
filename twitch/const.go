@@ -72,4 +72,8 @@ var RequestMap = map[types.TwitchCommand]CommandDetails{
 		Endpoint: "/chat/shoutouts",
 		Method:   "POST",
 	},
+	types.Warn: {
+		Endpoint: "/moderation/warnings",
+		Method:   "POST",
+	},
 }
