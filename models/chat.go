@@ -271,6 +271,10 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if isCommand && command == "watch" {
 				responseMsg := utils.WatchUser(strings.ToLower(args[0]))
 				m.chatContent += responseMsg + "\n"
+			} else if isCommand && command == "clearall" {
+				if err := m.chatMessageRepo.ClearMessages(); err != nil {
+					m.chatContent += err.Error() + "\n"
+				}
 			} else if isCommand && command == "search" {
 				res, _ := m.chatMessageRepo.Search(strings.Join(args, " "))
 				resString := ""

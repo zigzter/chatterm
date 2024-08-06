@@ -10,6 +10,7 @@ import (
 
 type ChatMessageRepository interface {
 	Insert(msg types.InsertChat) error
+	ClearMessages() error
 	BuildQuery(input string) string
 	Search(query string) ([]types.InsertChat, error)
 	GetUsersMessages(username, channel string) ([]types.InsertChat, error)
@@ -38,6 +39,13 @@ func (c *ChatMessageRepo) Insert(msg types.InsertChat) error {
 		msg.Content,
 		msg.Timestamp,
 	)
+	return err
+}
+
+// ClearMessages deletes ALL stored messages
+func (c *ChatMessageRepo) ClearMessages() error {
+	query := "DELETE FROM chat_messages"
+	_, err := c.db.Exec(query)
 	return err
 }
 

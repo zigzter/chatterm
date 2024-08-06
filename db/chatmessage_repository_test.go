@@ -86,4 +86,11 @@ func TestChatMessageRepo(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("Test Repo Clear", func(t *testing.T) {
+		err := repo.ClearMessages()
+		msgs, _ := repo.Search("channel:MiddleEarth")
+		assert.Empty(t, msgs)
+		assert.NoError(t, err)
+	})
 }
