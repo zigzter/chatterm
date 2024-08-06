@@ -58,6 +58,8 @@ type ChatModel struct {
 func InitialChatModel(width int, height int) ChatModel {
 	vp := viewport.New(width-2, height-7)
 	vp.SetContent("")
+	vp.KeyMap.PageDown.SetEnabled(false)
+	vp.KeyMap.PageUp.SetEnabled(false)
 	ip := viewport.New((width/2)-2, height-7)
 	ip.SetContent("")
 	utils.InitConfig()
