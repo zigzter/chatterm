@@ -48,6 +48,8 @@ Simply download the binary and run `./chatterm`
 - Clear chat: `/clear` (this is the moderator clear, not a local one)
 - Get a user's info: `/info username`
 - Give a streamer a shoutout: `/shoutout username` (untested, only works if the channel you're in is live)
+- Warn a user, requiring them to acknowledge the warning before they can resume chatting: `/warn username reason`
+- Delete all locally stored chat messages: `/clearall`
 - Enable/disable shield mode: `/shield on|off`
 - Watch a user (highlight their messages): `/watch username`
     - To remove the user, re-run the command
