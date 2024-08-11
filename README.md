@@ -47,6 +47,7 @@ Simply download the binary and run `./chatterm`
     - This search queries the local DB, so it will only find messages that you've received while in the chat rooms
 - Clear chat: `/clear` (this is the moderator clear, not a local one)
 - Get a user's info: `/info username`
+- Send an announcement: `/announcement something to announce`
 - Give a streamer a shoutout: `/shoutout username` (untested, only works if the channel you're in is live)
 - Warn a user, requiring them to acknowledge the warning before they can resume chatting: `/warn username reason`
 - Delete all locally stored chat messages: `/clearall`

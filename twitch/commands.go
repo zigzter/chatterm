@@ -110,7 +110,7 @@ func (req *APIRequest) Execute() ([]byte, error) {
 func isValidCommand(command string) bool {
 	switch types.TwitchCommand(command) {
 	case types.Ban, types.Clear, types.Unban, types.Delete,
-		types.Info, types.Shield,
+		types.Info, types.Shield, types.Announce,
 		types.FollowersOnly, types.SubOnly, types.Slow,
 		types.EmoteOnly, types.Shoutout, types.Warn:
 		return true
@@ -140,6 +140,8 @@ func SendTwitchCommand(command types.TwitchCommand, args []string) (interface{},
 		return sendShieldRequest(args)
 	case types.Warn:
 		return sendWarning(args[0], strings.Join(args[1:], " "))
+	case types.Announce:
+		return sendAnnouncement(strings.Join(args, " "))
 	case types.Slow, types.SubOnly, types.FollowersOnly:
 		var duration string
 		if len(args) > 0 {
@@ -446,4 +448,22 @@ func sendWarning(username, reason string) (*types.WarnResp, error) {
 	var warnResponse types.WarnResp
 	json.Unmarshal(response, &warnResponse)
 	return &warnResponse, nil
+}
+
+func sendAnnouncement(text string) (any, error) {
+	cmdDetails := RequestMap[types.Announce]
+	url := rootUrl + cmdDetails.Endpoint
+	requestBody, err := json.Marshal(map[string]string{
+		"message": text,
+	})
+	if err != nil {
+		return nil, err
+	}
+	_, err = NewAPIRequest(cmdDetails.Method, url, requestBody).
+		AddHeader("Content-Type", "application/json").
+		Execute()
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }

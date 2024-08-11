@@ -61,6 +61,7 @@ func PromptTwitchAuth() tea.Cmd {
 			"moderator:manage:warnings",
 			"moderator:manage:shoutouts",
 			"moderator:manage:shield_mode",
+			"moderator:manage:announcements",
 		}
 		redirectUrl := serverAddr
 		scope := strings.Join(scopes, " ")

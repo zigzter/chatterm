@@ -76,4 +76,8 @@ var RequestMap = map[types.TwitchCommand]CommandDetails{
 		Endpoint: "/moderation/warnings",
 		Method:   "POST",
 	},
+	types.Announce: {
+		Endpoint: "/chat/announcements",
+		Method:   "POST",
+	},
 }

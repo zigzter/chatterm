@@ -18,6 +18,7 @@ type (
 type TwitchCommand string
 
 const (
+	Announce      TwitchCommand = "announce"
 	Ban           TwitchCommand = "ban"
 	Info          TwitchCommand = "info"
 	Warn          TwitchCommand = "warn"
