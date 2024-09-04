@@ -71,7 +71,7 @@ func InitialChatModel(width int, height int) ChatModel {
 	msgChan := make(chan types.ParsedIRCMessage, 100)
 	wsClient, err := utils.NewWebSocketClient()
 	if err != nil {
-		log.Fatal("Failed to initialize socket client")
+		log.Fatal("Failed to initialize socket client: ", err.Error())
 	}
 	go utils.EstablishWSConnection(wsClient, channel, username, oauth, msgChan)
 	utils.SetFormatterConfigValues()
@@ -291,7 +291,14 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				var feedback string
 				res, err := twitch.SendTwitchCommand(types.TwitchCommand(command), args)
 				if err != nil {
-					feedback = err.Error() + "\n"
+					switch error := err.(type) {
+					case types.TwitchAPIError:
+						log.Println(error.Status, error.Message)
+						feedback = error.Message + "\n"
+					default:
+						log.Println(error.Error())
+						feedback = err.Error() + "\n"
+					}
 					m.chatContent += feedback
 				} else {
 					switch resp := res.(type) {

@@ -42,16 +42,17 @@ func httpClient() *http.Client {
 func fireRequest(req *http.Request) ([]byte, error) {
 	client := httpClient()
 	resp, err := client.Do(req)
-	bodyBytes, err := io.ReadAll(resp.Body)
+	var buff bytes.Buffer
+	_, err = io.Copy(&buff, resp.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 	statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
 	if !statusOK {
-		return nil, errors.New(string(bodyBytes))
+		return nil, errors.New(string(buff.Bytes()))
 	}
-	return bodyBytes, nil
+	return buff.Bytes(), nil
 }
 
 type APIRequest struct {
