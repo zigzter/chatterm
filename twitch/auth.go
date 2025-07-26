@@ -3,6 +3,7 @@ package twitch
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 
@@ -34,11 +35,14 @@ func StartLocalServer(ready chan<- struct{}, externalMsgs chan tea.Msg) tea.Cmd 
 			http.ServeFile(w, r, filePath)
 		})
 
-		httpServer := &http.Server{Addr: serverAddr}
+		listener, err := net.Listen("tcp", serverAddr)
+		if err != nil {
+			log.Fatalf("Failed to create listener: %v", err)
+		}
+		ready <- struct{}{}
 		go func() {
-			ready <- struct{}{}
-			if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				log.Fatalf("ListenAndServe error: %v", err)
+			if err := http.Serve(listener, nil); err != nil {
+				log.Fatalf("Serve error: %v", err)
 			}
 		}()
 		return types.ServerStartedMsg{}
