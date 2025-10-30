@@ -42,12 +42,20 @@ func httpClient() *http.Client {
 func fireRequest(req *http.Request) ([]byte, error) {
 	client := httpClient()
 	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	if resp == nil {
+		return nil, errors.New("HTTP request returned nil response")
+	}
+	defer resp.Body.Close()
+
 	var buff bytes.Buffer
 	_, err = io.Copy(&buff, resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
-	defer resp.Body.Close()
+
 	statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
 	if !statusOK {
 		return nil, errors.New(string(buff.Bytes()))
