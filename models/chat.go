@@ -53,6 +53,7 @@ type ChatModel struct {
 	currentUser      currentUser
 	chatMessageRepo  db.ChatMessageRepository
 	shouldStackInfo  bool
+	connectionError  error
 }
 
 func InitialChatModel(width int, height int) ChatModel {
@@ -70,10 +71,13 @@ func InitialChatModel(width int, height int) ChatModel {
 	channel := viper.GetString(utils.ChannelKey)
 	msgChan := make(chan types.ParsedIRCMessage, 100)
 	wsClient, err := utils.NewWebSocketClient()
+	var connectionErr error
 	if err != nil {
-		log.Fatal("Failed to initialize socket client: ", err.Error())
+		log.Println("Failed to initialize socket client: ", err.Error())
+		connectionErr = fmt.Errorf("Failed to connect to Twitch IRC: %w", err)
+	} else {
+		go utils.EstablishWSConnection(wsClient, channel, username, oauth, msgChan)
 	}
-	go utils.EstablishWSConnection(wsClient, channel, username, oauth, msgChan)
 	utils.SetFormatterConfigValues()
 	ti := textinput.New()
 	ti.CharLimit = 256
@@ -105,6 +109,7 @@ func InitialChatModel(width int, height int) ChatModel {
 			Slow: "0",
 		},
 		chatMessageRepo: chatMessageRepo,
+		connectionError:  connectionErr,
 	}
 }
 
@@ -240,6 +245,9 @@ func (m *ChatModel) SetInfoView(content string) {
 }
 
 func (m ChatModel) Init() tea.Cmd {
+	if m.connectionError != nil {
+		return nil
+	}
 	return listenToWebSocket(m.msgChan)
 }
 
@@ -256,7 +264,9 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.Height = m.height - 7
 			m.WrapMessages()
 		case tea.KeyEsc:
-			m.WsClient.Conn.Close()
+			if m.WsClient != nil && m.WsClient.Conn != nil {
+				m.WsClient.Conn.Close()
+			}
 			return ChangeView(m, ChannelInputState)
 		case tea.KeyTab:
 			input := m.textinput.Value()
@@ -443,6 +453,32 @@ func (m ChatModel) renderInfoView() string {
 
 func (m ChatModel) View() string {
 	var b strings.Builder
+
+	// If there's a connection error, display it prominently
+	if m.connectionError != nil {
+		errorStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#ff0000")).
+			Bold(true).
+			Padding(1, 2)
+
+		errorBox := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("#ff0000")).
+			Padding(1, 2).
+			Width(m.width - 4)
+
+		errorMessage := fmt.Sprintf(
+			"%s\n\n%s\n\nThis could be due to:\n• Network connectivity issues\n• Firewall blocking WebSocket connections\n• Twitch IRC service issues\n\nCheck the debug log for more details:\n%s",
+			errorStyle.Render("Connection Error"),
+			m.connectionError.Error(),
+			"~/.config/chatterm/debug.log or ~/Library/Preferences/chatterm/debug.log",
+		)
+
+		b.WriteString(errorBox.Render(errorMessage))
+		b.WriteString(helpStyle.Render("\n[Esc]: return to channel selection - [Ctrl+c]: quit"))
+		return b.String()
+	}
+
 	infoCloseMessage := ""
 	if m.shouldRenderInfo {
 		infoCloseMessage = " - [Ctrl+x] close info view"
