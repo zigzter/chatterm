@@ -29,7 +29,7 @@ type WebSocketClient struct {
 
 // NewWebSocketClient creates and returns the websocket client
 func NewWebSocketClient() (*WebSocketClient, error) {
-	socketUrl := "ws://irc-ws.chat.twitch.tv:80"
+	socketUrl := "wss://irc-ws.chat.twitch.tv:443"
 	conn, _, err := websocket.DefaultDialer.Dial(socketUrl, nil)
 	if err != nil {
 		return nil, err
